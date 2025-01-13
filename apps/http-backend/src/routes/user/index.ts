@@ -78,7 +78,7 @@ userRouter.post("/create-room", authMiddleware, async function (req : IGetUserAu
             slug : roomName
         }})
 
-        res.status(200).json({message : "Room creater"});
+        res.status(200).json({message : "Room creater", roomId : room.id});
         return;
 
     } catch (error) {

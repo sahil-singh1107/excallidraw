@@ -4,13 +4,11 @@ import { prisma } from "@repo/db/client";
 
 const chatRouter : Router = express.Router();
 
-chatRouter.get("/chats", authMiddleware, async function (req : IGetUserAuthInfoRequest, res) {
-    const userId = req.userId
-    const roomName = req.query.room as string;
+chatRouter.get("/chats/:roomId", authMiddleware, async function (req : IGetUserAuthInfoRequest, res) {
+    const roomId = req.params.roomId
 
     try {
-        const room = await prisma.room.findUnique({where : {slug : roomName}});
-        const chats = await prisma.chat.findMany({where : {roomId : room?.id}});
+        const chats = await prisma.chat.findMany({where : {roomId : Number(roomId)}, orderBy: {id : "desc"}, take : 50});
 
         res.status(200).json({chats});
         return;
