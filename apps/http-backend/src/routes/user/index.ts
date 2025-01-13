@@ -1,8 +1,7 @@
 import express, { Router } from "express"
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
 import {JWT_SECRET} from "@repo/backend-common/config"
 import {UserSchema, SiginSchema, CreateRoomSchema} from "@repo/common/config"
+import {prisma} from "@repo/db/client"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
 import authMiddleware, { IGetUserAuthInfoRequest } from "../../middleware"
@@ -70,9 +69,22 @@ userRouter.post("/sigin", async function (req, res) {
     }
 })
 
-userRouter.post("/create-room", authMiddleware, function (req : IGetUserAuthInfoRequest ,res) {
+userRouter.post("/create-room", authMiddleware, async function (req : IGetUserAuthInfoRequest ,res) {
     const userId = req.userId
-    
+    const {roomName} = req.body
+    try {
+        const room =  await prisma.room.create({data: {
+            adminId : Number(userId),
+            slug : roomName
+        }})
+
+        res.status(200).json({message : "Room creater"});
+        return;
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message : "Internal Server Error"})
+    }
 })
 
 
