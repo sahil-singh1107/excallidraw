@@ -15,15 +15,19 @@ userRouter.post("/signup", async function (req, res) {
         const result = UserSchema.safeParse(req.body);
 
         if (!result.success) {
-            res.status(411).json({message : "Invalid data"})
-            return;
+             res.status(400).json({ message: "Invalid data" });return;
         }
 
-        const findUser = await prisma.user.findUnique({where: {email}});
+        let findUser = await prisma.user.findUnique({where: {email}});
         if (findUser) {
-            res.status(411).json({message : "User already exists"})
-            return;
+           res.status(409).json({ message: "Email already in use" });
+           return;
         }
+        findUser = await prisma.user.findUnique({where : {username}})
+        if (findUser) {
+            res.status(409).json({ message: "Username already in use" });
+            return;
+         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await prisma.user.create({data : {
             firstName, 
@@ -32,8 +36,7 @@ userRouter.post("/signup", async function (req, res) {
             username,
             password : hashedPassword
         }});
-        const token = jwt.sign({userId : user.id}, JWT_SECRET);
-        res.status(200).json({message : "User created", token});
+        res.status(200).json({message : "User created"});
         return;
     } catch (error) {
         console.log(error);
@@ -41,9 +44,8 @@ userRouter.post("/signup", async function (req, res) {
     }
 })
 
-userRouter.post("/sigin", async function (req, res) {
+userRouter.post("/signin", async function (req, res) {
     const {email , password}  = req.body
-
     try {
         const result = SiginSchema.safeParse(req.body);
         if (!result.success) {
@@ -61,7 +63,7 @@ userRouter.post("/sigin", async function (req, res) {
             return;
         }
         const token = jwt.sign({userId :  user.id}, JWT_SECRET);
-        res.status(200).json({message : "User created", token});
+        res.status(200).json({message : "User created", token, user : {id : user.id, username : user.username, email : user.email}});
         return;
     } catch (error) {
         console.log(error);

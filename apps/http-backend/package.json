@@ -4,24 +4,26 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "dev": "esr ./src/index.ts && node ./dist/index.js"
+    "dev": "esr ./src/index.ts && node ./dist/index.js"
   },
   "dependencies": {
     "@prisma/client": "6.2.1",
+    "@repo/db": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "@repo/db" : "workspace:*"
+    "jsonwebtoken": "^9.0.2"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@repo/backend-common": "workspace:*",
+    "@repo/common": "workspace:*",
     "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
-    "@types/jsonwebtoken": "^9.0.7",
-    "@repo/backend-common" : "workspace:*",
-    "@repo/common" : "workspace:*"
+    "@types/jsonwebtoken": "^9.0.7"
   }
 }
