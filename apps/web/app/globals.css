@@ -3,8 +3,5 @@
 @tailwind utilities;
 
 @layer utilities {
-    .dot-pattern {
-        background-image: radial-gradient(circle, #312e2c 1px, transparent 1px);
-        background-size: 20px 20px; /* Adjust the size for spacing */
-      }
+   
 }

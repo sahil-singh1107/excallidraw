@@ -12,11 +12,10 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
   const { socket, loading } = useSocket(token || "");
   const [chats, setChats] = useState<string[]>(messages);
   const [currentMessage, setCurrentMessage] = useState<string>("");
+  const [members, setMembers] = useState<string[]>([]);
 
   useEffect(() => {
     if (socket && !loading) {
-      console.log("Socket initialized:", socket);
-
       // Join room
       socket.send(
         JSON.stringify({
@@ -32,12 +31,17 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
         if (parsedData.type === "chat") {
           setChats((prev) => [...prev, parsedData.message]);
         }
+        if (parsedData.type === "user_updates") {
+          setMembers(parsedData.members);
+        }
       };
 
       socket.onmessage = handleMessage;
-
-      // Cleanup on unmount or socket change
       return () => {
+        socket.send(JSON.stringify({
+          type : "leave_room",
+          roomId : id
+        }))
         socket.onmessage = null;
       };
     }
@@ -62,7 +66,11 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
       {chats.map((message, index) => (
         <p key={index}>{message}</p>
       ))}
-
+      {
+        members.map((member, i) => (
+          <p key={i}>{member}</p>
+        ))
+      }
       <input
         value={currentMessage}
         onChange={(e) => setCurrentMessage(e.target.value)}

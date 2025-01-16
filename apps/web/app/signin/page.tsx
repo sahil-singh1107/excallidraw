@@ -1,8 +1,8 @@
 "use client"
-import React from 'react'
-import SideBar from '../components/SideBar'
+import React, { useState } from 'react'
 import { MdOutlineEmail } from "react-icons/md";
 import { FaRegEye } from "react-icons/fa";
+import { FaRegEyeSlash } from "react-icons/fa";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SiginSchema } from "@repo/common/config"
@@ -11,6 +11,9 @@ import { useRouter } from 'next/navigation'
 import axios from 'axios';
 
 const Page = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const form = useForm<z.infer<typeof SiginSchema>>({
     resolver: zodResolver(SiginSchema),
     defaultValues: {
@@ -47,7 +50,7 @@ const Page = () => {
           <span className='text-white text-xl'>Log in to your Account</span>
         </div>
         <form className='flex flex-col space-y-6 mt-16 w-[80%]' onSubmit={form.handleSubmit(onSubmit)}>
-          <div className='flex flex-col space-y-1 text-[#808081] hover:text-white duration-200 hover:-translate-y-3'>
+          <div className='flex flex-col space-y-1 text-[#808081] hover:text-white duration-200 hover:-translate-y-1'>
             <label htmlFor='email' className='text-xs'>Email</label>
             <div className='relative'>
               <div className={`absolute bg-red-500 inset-0 rounded-xl blur opacity-0 ${errors.email && ' opacity-50'}`}></div>
@@ -61,13 +64,16 @@ const Page = () => {
 
             {errors.email && <p className='text-xs'>{errors.email.message}</p>}
           </div>
-          <div className='flex flex-col space-y-1 text-[#808081] hover:text-white duration-200 hover:-translate-y-3'>
+          <div className='flex flex-col space-y-1 text-[#808081] hover:text-white duration-200 hover:-translate-y-1'>
             <label htmlFor='password' className='text-xs'>Password</label>
             <div className='relative'>
               <div className={`absolute -inset-0.5 bg-gradient-to-r from-pink-400 to-red-600 blur ${errors.password ? 'opacity-50' : 'opacity-0'}`}></div>
               <div className='flex justify-end items-center relative'>
-                <input {...register('password')} id='password' type='password' className='w-full bg-[#1b1a1b] h-10 rounded-xl p-6 text-white' />
-                <FaRegEye className='absolute mr-2 w-10 hover:cursor-pointer' />
+                <input {...register('password')} id='password' type={showPassword ? "password" : "text"} className='w-full bg-[#1b1a1b] h-10 rounded-xl p-6 text-white transition duration-100' />
+                {
+                  showPassword ? (<FaRegEye className='absolute mr-2 w-10 hover:cursor-pointer' onClick={() => setShowPassword(prev => !prev)} />) : (<FaRegEyeSlash className='absolute mr-2 w-10 hover:cursor-pointer' onClick={() => { setShowPassword(prev => !prev) }} />)
+                }
+
               </div>
             </div>
 
@@ -75,7 +81,9 @@ const Page = () => {
           </div>
           <div className='relative group'>
             <div className='absolute -inset-0.5 bg-gradient-to-r from-pink-400 to-purple-400 rounded-xl blur-md opacity-75 transition duration-200 group-hover:opacity-100'></div>
-            <button className='bg-white text-black w-full h-10 rounded-xl font-semibold relative' >Sign In</button>
+
+            <button className='bg-white text-black w-full h-10 rounded-xl font-semibold relative focus:scale-[99.5%]transition duration-200 '>Sign In</button>
+
           </div>
         </form>
         <span className='text-[#555555] text-center mt-2 flex'>Dont have an account? <p className='text-white ml-2 hover:cursor-pointer' onClick={() => {

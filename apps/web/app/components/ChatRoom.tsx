@@ -1,15 +1,15 @@
 import axios from 'axios'
 import ChatRoomClient from './ChatRoomClient'
 
-async function getChats (roomId : number) {
+async function getChats (roomId : number, token : string) {
     console.log(roomId);
-    const res = await axios.get(`http://localhost:3001/api/v1/chat/chats/${roomId}`, {headers : {Authorization : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImlhdCI6MTczNjgwMjI5Nn0.pt4HDL36dux6J2kPx96ei4nM5HpoIvOLyR40lcl8uPQ"}})
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chat/chats/${roomId}`, {headers : {Authorization : token}})
     return res.data.chats;
 }
 
-const ChatRoom = async ({id} : {id : number}) => {
+const ChatRoom = async ({id, token} : {id : number, token : string}) => {
 
-  let chats = await getChats(id);
+  let chats = await getChats(id, token);
   chats = chats
   .filter((chat: any) => chat.message) 
   .map((chat: any) => chat.message); 
