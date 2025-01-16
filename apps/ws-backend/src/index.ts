@@ -7,9 +7,22 @@ interface User {
   ws: WebSocket
   rooms: string[]
   userId: string
+  color: string
 }
 
 const users: Map<string, User> = new Map();
+
+function generateRandomColor() {
+  // Generate random values for red, green, and blue
+  const red = Math.floor(Math.random() * 256);
+  const green = Math.floor(Math.random() * 256);
+  const blue = Math.floor(Math.random() * 256);
+
+  // Convert RGB to a hex string
+  const hexColor = `#${red.toString(16).padStart(2, '0')}${green.toString(16).padStart(2, '0')}${blue.toString(16).padStart(2, '0')}`;
+
+  return hexColor;
+}
 
 wss.on('connection', async function connection(ws, request) {
 
@@ -37,7 +50,9 @@ wss.on('connection', async function connection(ws, request) {
     return;
   }
 
-  users.set(userId, { userId, rooms: [], ws });
+
+
+  users.set(userId, { userId, rooms: [], ws, color: generateRandomColor() });
 
   ws.on('message', async function message(data) {
     const parsedData = JSON.parse(data as unknown as string)
@@ -48,17 +63,17 @@ wss.on('connection', async function connection(ws, request) {
 
     if (parsedData.type === "join_room") {
       if (user) user.rooms.push(parsedData.roomId);
-      const members : string[] = [];
-      for (let [k,v] of users) {
+      const members: { username: string, color: string }[] = [];
+      for (let [k, v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
-          const findUser = await prisma.user.findUnique({where: {id : Number(v.userId)}});
-          members.push(findUser!.username);
+          const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
+          members.push({ username: findUser!.username, color: v.color });
         }
       }
-      for (let [k,v] of users) {
+      for (let [k, v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
           v.ws.send(JSON.stringify({
-            type : "user_updates",
+            type: "user_updates",
             members
           }))
         }
@@ -69,17 +84,17 @@ wss.on('connection', async function connection(ws, request) {
       if (user) {
         user.rooms = user.rooms.filter(x => x !== parsedData.roomId);
       }
-      const members : string[] = [];
-      for (let [k,v] of users) {
+      const members: { username: string, color: string }[] = [];
+      for (let [k, v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
-          const findUser = await prisma.user.findUnique({where: {id : Number(v.userId)}});
-          members.push(findUser!.username);
+          const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
+          members.push({ username: findUser!.username, color: v.color });
         }
       }
-      for (let [k,v] of users) {
+      for (let [k, v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
           v.ws.send(JSON.stringify({
-            type : "user_updates",
+            type: "user_updates",
             members
           }))
         }
@@ -98,15 +113,15 @@ wss.on('connection', async function connection(ws, request) {
       //   }
       // })
 
-      users.forEach(user => {
-        if (user.rooms.includes(roomId)) {
-          user.ws.send(JSON.stringify({
+      for (let [k, v] of users) {
+        if (v.rooms.includes(roomId)) {
+          v.ws.send(JSON.stringify({
             type: "chat",
             message: message,
             roomId
           }))
         }
-      })
+      }
     }
   });
 

@@ -11,15 +11,23 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.2.2",
+    "@dicebear/core": "^9.2.2",
     "@hookform/resolvers": "^3.10.0",
     "@repo/ui": "workspace:*",
     "axios": "^1.7.9",
+    "canvas": "^3.0.1",
+    "jdenticon": "^3.3.0",
+    "konva": "^9.3.18",
     "next": "^15.1.0",
     "next-auth": "^4.24.11",
+    "randomcolor": "^0.6.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
     "react-icons": "^5.4.0",
+    "react-konva": "^19.0.2",
+    "react-sketch": "^0.5.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -27,6 +35,7 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20",
+    "@types/randomcolor": "^0.5.9",
     "@types/react": "18.3.1",
     "@types/react-dom": "18.3.0",
     "autoprefixer": "^10.4.20",

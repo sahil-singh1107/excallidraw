@@ -15,15 +15,15 @@ const Page = () => {
       router.push("/signin")
     }
     setToken(token!);
-  },[])
+  }, [])
 
   const [roomId, setRoomId] = useState<string>("");
 
   return (
     <div>
-      <input value={roomId} onChange={(e) => {setRoomId(e.target.value)}}  />
+      <input value={roomId} onChange={(e) => { setRoomId(e.target.value) }} />
       <button onClick={() => {
-          router.push(`/room/${roomId}/${token}`)
+        router.push(`/room/${roomId}/${token}`)
       }}>join</button>
     </div>
   )

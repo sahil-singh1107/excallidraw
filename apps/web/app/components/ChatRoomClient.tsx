@@ -1,10 +1,16 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSocket } from "../hooks/useSocket";
+import Avatar from "./Avatar";
 
 interface ChatRoomClientProps {
   messages: string[];
   id: number;
+}
+
+interface Member {
+  username: string
+  color: string
 }
 
 const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
@@ -12,7 +18,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
   const { socket, loading } = useSocket(token || "");
   const [chats, setChats] = useState<string[]>(messages);
   const [currentMessage, setCurrentMessage] = useState<string>("");
-  const [members, setMembers] = useState<string[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
 
   useEffect(() => {
     if (socket && !loading) {
@@ -39,8 +45,8 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
       socket.onmessage = handleMessage;
       return () => {
         socket.send(JSON.stringify({
-          type : "leave_room",
-          roomId : id
+          type: "leave_room",
+          roomId: id
         }))
         socket.onmessage = null;
       };
@@ -48,7 +54,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
   }, [socket, loading, id]);
 
   const handleSendMessage = () => {
-    if (currentMessage.trim()) {
+    if (currentMessage) {
       console.log("Sending message:", currentMessage);
       socket?.send(
         JSON.stringify({
@@ -63,12 +69,20 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
 
   return (
     <div>
-      {chats.map((message, index) => (
-        <p key={index}>{message}</p>
-      ))}
+
+      <ul className="flex space-x-12">
+        {
+          members.map((member, i) => (
+            <li key={i}>
+              <Avatar name={member.username} color={member.color} />
+            </li>
+
+          ))
+        }
+      </ul>
       {
-        members.map((member, i) => (
-          <p key={i}>{member}</p>
+        chats.map((message, i) => (
+          <p key={i}>{message}</p>
         ))
       }
       <input

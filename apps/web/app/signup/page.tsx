@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation'
 const Page = () => {
 
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const form = useForm<z.infer<typeof UserSchema>>({
         resolver: zodResolver(UserSchema),
@@ -31,6 +32,7 @@ const Page = () => {
     async function onSubmit(values: z.infer<typeof UserSchema>) {
         if (!values.email || !values.firstName || !values.lastName || !values.password || !values.username) return;
         try {
+            setLoading(true);
             await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/signup`, {
                 firstName: values.firstName,
                 lastName: values.lastName,
@@ -48,6 +50,7 @@ const Page = () => {
                 setError("email", { message: error.response.data.message })
             }
         }
+        setLoading(false);
     }
 
     return (
@@ -125,7 +128,7 @@ const Page = () => {
                         {errors.password && <p className='text-xs'>{errors.password.message}</p>}
                     </div>
                     <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-pink-400 to-purple-400 rounded-xl blur-md opacity-75 transition duration-200 group-hover:opacity-100'></div>
+                        <div className={`absolute -inset-0.5 bg-gradient-to-r from-pink-400 to-purple-400 rounded-xl blur-md opacity-75 transition duration-200 group-hover:opacity-100 ${loading && 'opacity-90 animate-pulse'}`}></div>
                         <button className='bg-white text-black w-full h-10 rounded-xl font-semibold relative focus:scale-[99.5%] transition duration-200' >Sign Up</button>
                     </div>
 
