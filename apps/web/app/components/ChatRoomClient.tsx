@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useSocket } from "../hooks/useSocket";
 import Avatar from "./Avatar";
+import { PiCursorFill } from "react-icons/pi";
 
 interface ChatRoomClientProps {
   messages: string[];
@@ -11,6 +12,8 @@ interface ChatRoomClientProps {
 interface Member {
   username: string
   color: string
+  x: number
+  y: number
 }
 
 const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
@@ -19,10 +22,12 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
   const [chats, setChats] = useState<string[]>(messages);
   const [currentMessage, setCurrentMessage] = useState<string>("");
   const [members, setMembers] = useState<Member[]>([]);
+  const [cursorPos, setCursorPos] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
+
+
 
   useEffect(() => {
     if (socket && !loading) {
-      // Join room
       socket.send(
         JSON.stringify({
           type: "join_room",
@@ -30,10 +35,25 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
         })
       );
 
-      // Listen for messages
+      const mouseMoveHandler = (e: MouseEvent) => {
+        const newCursorPos = { x: e.x, y: e.y };
+        setCursorPos(newCursorPos);
+        if (members.length > 1) {
+          socket?.send(JSON.stringify({
+            type: "cursor_move",
+            x: newCursorPos.x,
+            y: newCursorPos.y,
+            roomId: id,
+          }));
+        }
+
+      };
+
+      window.addEventListener("mousemove", mouseMoveHandler);
+
       const handleMessage = (event: MessageEvent) => {
         const parsedData = JSON.parse(event.data);
-        console.log(parsedData.message);
+
         if (parsedData.type === "chat") {
           setChats((prev) => [...prev, parsedData.message]);
         }
@@ -52,6 +72,9 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
       };
     }
   }, [socket, loading, id]);
+
+  console.log(members);
+
 
   const handleSendMessage = () => {
     if (currentMessage) {
@@ -75,8 +98,27 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ messages, id }) => {
           members.map((member, i) => (
             <li key={i}>
               <Avatar name={member.username} color={member.color} />
+              <div
+                id="cursor"
+                className="bg-red-400 h-10 w-10 absolute transition-all duration-150"
+                style={{
+                  left: `${member.x}px`,
+                  top: `${member.y}px`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              ></div>
+              <label
+                htmlFor="cursor"
+                className="text-black"
+                style={{
+                  left: `${member.x}px`,
+                  top: `${member.y}px`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                {member.username}
+              </label>
             </li>
-
           ))
         }
       </ul>
