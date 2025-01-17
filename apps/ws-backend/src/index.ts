@@ -10,6 +10,8 @@ interface User {
   color: string
   x: number
   y: number
+  status: boolean
+  message: string
 }
 
 const users: Map<string, User> = new Map();
@@ -50,27 +52,26 @@ wss.on('connection', async function connection(ws, request) {
 
 
 
-  users.set(userId, { userId, rooms: [], ws, color: generateRandomColor(), x: 0, y: 0 });
+  users.set(userId, { userId, rooms: [], ws, color: generateRandomColor(), x: 0, y: 0, status: false, message: "" });
 
   ws.on('message', async function message(data) {
     const parsedData = JSON.parse(data as unknown as string)
-    console.log(parsedData)
     if (!parsedData) return;
 
     const user = users.get(userId);
 
     if (parsedData.type === "cursor_move") {
       for (let [k, v] of users) {
-        if (v.ws===ws && v.rooms.includes(parsedData.roomId)) {
+        if (v.ws === ws && v.rooms.includes(parsedData.roomId)) {
           v.x = parsedData.x,
-          v.y = parsedData.y
+            v.y = parsedData.y
         }
       }
-      const members: { username: string, color: string, x: number, y: number }[] = [];
+      const members: { username: string, color: string, x: number, y: number, status: boolean, message: string }[] = [];
       for (let [k, v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
           const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
-          members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y });
+          members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y, status: v.status, message: v.message });
         }
       }
       for (let [k, v] of users) {
@@ -85,11 +86,11 @@ wss.on('connection', async function connection(ws, request) {
 
     if (parsedData.type === "join_room") {
       if (user) user.rooms.push(parsedData.roomId);
-      const members: { username: string, color: string, x: number, y: number }[] = [];
+      const members: { username: string, color: string, x: number, y: number, status: boolean, message: string }[] = [];
       for (let [k, v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
           const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
-          members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y });
+          members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y, status: v.status, message: v.message });
         }
       }
       for (let [k, v] of users) {
@@ -106,11 +107,11 @@ wss.on('connection', async function connection(ws, request) {
       if (user) {
         user.rooms = user.rooms.filter(x => x !== parsedData.roomId);
       }
-      const members: { username: string, color: string, x: number, y: number }[] = [];
+      const members: { username: string, color: string, x: number, y: number, status: boolean, message: string }[] = [];
       for (let [k, v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
           const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
-          members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y });
+          members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y, status: v.status, message: v.message });
         }
       }
       for (let [k, v] of users) {
@@ -127,20 +128,24 @@ wss.on('connection', async function connection(ws, request) {
       const roomId = parsedData.roomId
       const message = parsedData.message
 
-      // await prisma.chat.create({
-      //   data: {
-      //     roomId,
-      //     message,
-      //     userId
-      //   }
-      // })
-
       for (let [k, v] of users) {
-        if (v.rooms.includes(roomId)) {
+        if (v.rooms.includes(roomId) && v.ws === ws) {
+          v.status = !v.status
+          v.message = message
+        }
+      }
+      const members: { username: string, color: string, x: number, y: number, status: boolean, message: string }[] = [];
+      for (let [k, v] of users) {
+        if (v.rooms.includes(parsedData.roomId)) {
+          const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
+          members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y, status: v.status, message: v.message });
+        }
+      }
+      for (let [k, v] of users) {
+        if (v.rooms.includes(parsedData.roomId)) {
           v.ws.send(JSON.stringify({
-            type: "chat",
-            message: message,
-            roomId
+            type: "user_updates",
+            members
           }))
         }
       }

@@ -20,7 +20,7 @@ const Page = () => {
   const [roomId, setRoomId] = useState<string>("");
 
   return (
-    <div>
+    <div >
       <input value={roomId} onChange={(e) => { setRoomId(e.target.value) }} />
       <button onClick={() => {
         router.push(`/room/${roomId}/${token}`)
