@@ -14,7 +14,7 @@ export function useSocket() {
             return;
         }
 
-        const ws = new WebSocket(`ws://localhost:8080?token=${getToken}`)
+        const ws = new WebSocket(`ws://localhost:5000?token=${getToken}`)
 
         ws.onopen = () => {
             setLoading(false);

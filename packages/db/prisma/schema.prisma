@@ -21,24 +21,71 @@ model User {
   username  String @unique
   email     String @unique
   password  String
-  rooms Room[]
-  chats Chat[]
+  rooms     Room[]
 }
 
 model Room {
-  id       Int    @id @default(autoincrement())
-  slug String @unique
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
   createdAt DateTime @default(now())
-  adminId Int 
-  admin User @relation(fields: [adminId], references: [id])
-  chats Chat[]
+  adminId   Int
+  admin     User     @relation(fields: [adminId], references: [id])
+  shapes    Shape[]
 }
 
-model Chat {
-  id       Int    @id @default(autoincrement()) 
-  message String
+model Shape {
+  id     Int        @id @default(autoincrement())
   roomId Int
-  userId Int 
-  user User @relation(fields: [userId], references: [id])
-  room Room @relation(fields: [roomId], references: [id])
+  room   Room       @relation(fields: [roomId], references: [id])
+  type   String
+  rect   Rectangle?
+  line   Line?
+  circle Circle?
+  text   Text?
+  free   Free?
+}
+
+model Rectangle {
+  id      Int   @id @default(autoincrement())
+  x       Int
+  y       Int
+  width   Int
+  height  Int
+  shapeId Int   @unique
+  shape   Shape @relation(fields: [shapeId], references: [id])
+}
+
+model Line {
+  id      Int   @id @default(autoincrement())
+  x1      Int
+  y1      Int
+  x2      Int
+  y2      Int
+  shapeId Int   @unique
+  shape   Shape @relation(fields: [shapeId], references: [id])
+}
+
+model Circle {
+  id      Int   @id @default(autoincrement())
+  x       Int
+  y       Int
+  radius  Int
+  shapeId Int   @unique
+  shape   Shape @relation(fields: [shapeId], references: [id])
+}
+
+model Text {
+  id      Int     @id @default(autoincrement())
+  x1      Int
+  y1      Int
+  text    String?
+  shapeId Int     @unique
+  shape   Shape   @relation(fields: [shapeId], references: [id])
+}
+
+model Free {
+  id      Int   @id @default(autoincrement())
+  path    Json
+  shapeId Int   @unique
+  shape   Shape @relation(fields: [shapeId], references: [id])
 }

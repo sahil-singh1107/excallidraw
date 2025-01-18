@@ -1,3 +1,5 @@
+import axios from "axios";
+
 type Shape = {
     type: "rect";
     x: number;
@@ -25,7 +27,41 @@ type Shape = {
     path: { x: number, y: number }[];
 };
 
-const shapes: Shape[] = [];
+let shapes: Shape[] = [];
+
+function shareShape (socket : WebSocket, roomId : number) {
+    socket.send(JSON.stringify({
+        type : "shape",
+        data : shapes.slice(-1)[0],
+        roomId
+    }))
+}
+
+async function getShapes (roomId : number) {
+    const res  = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chat/shapes/${roomId}`) ;
+    console.log(res);
+    const getShapes : Shape[] = [];
+    res.data.map((data : Shape) => {
+        console.log(data);
+        if (data.type === "circle") {
+            getShapes.push({type : "circle", x : data.x, y : data.y, radius : data.radius})
+        }
+        else if (data.type === "free") {
+            getShapes.push({type : "free", path : data.path})
+        }
+
+        else if (data.type === "line") {
+            getShapes.push({type : "line", x1 : data.x1, x2 : data.x2, y1 : data.y1, y2 : data.y2})
+        }
+        else if (data.type === "rect") {
+            getShapes.push({type : "rect", height : data.height, width : data.width, x : data.x, y : data.y});
+        }
+        else if (data.type === "text") {
+            getShapes.push({type : "text", text : data.text, x1 : data.x1, y1 : data.y1});
+        }
+    })
+    shapes = getShapes;
+}
 
 export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket: WebSocket, shapeType: string) {
     const ctx = canvas.getContext("2d");
@@ -37,6 +73,15 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
 
     let clicked = false;
 
+    getShapes(roomId);
+
+    socket.onmessage = (e) => {
+        const message = JSON.parse(e.data);
+        if (message.type === "shape") {
+            shapes.push(message.shape);
+            clearAndRedraw();
+        }
+    }
 
     function clearAndRedraw() {
         if (!ctx) return;
@@ -103,6 +148,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
                 const height = (e.clientY * 2) - startY;
 
                 shapes.push({ type: "rect", x: startX, y: startY, width, height });
+                shareShape(socket, roomId);
 
                 clearAndRedraw();
             }
@@ -135,6 +181,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
             if (clicked) {
                 clicked = false;
                 shapes.push({ type: "line", x1, y1, x2, y2 });
+                shareShape(socket, roomId)
                 clearAndRedraw();
             }
         });
@@ -164,12 +211,12 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
             if (clicked) {
                 clicked = false;
                 shapes.push({ type: "circle", x, y, radius })
+                shareShape(socket, roomId);
                 clearAndRedraw();
 
             }
         });
     }
-
     else if (shapeType === "text") {
         let x1: number, y1: number;
 
@@ -192,6 +239,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
                 clicked = false;
                 const text = prompt();
                 shapes.push({ type: "text", x1, y1, text })
+                shareShape(socket, roomId);
                 clearAndRedraw();
             }
 
@@ -226,6 +274,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
             if (clicked) {
                 clicked = false;
                 shapes.push({ type: "free", path: currentPath });
+                shareShape(socket, roomId);
                 currentPath = [];
                 clearAndRedraw();
             }

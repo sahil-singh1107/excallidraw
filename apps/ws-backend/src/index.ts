@@ -1,6 +1,6 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import jwt, { JwtPayload } from "jsonwebtoken"
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 5000 });
 import { JWT_SECRET } from "@repo/backend-common/config"
 import { prisma } from "@repo/db/client"
 interface User {
@@ -56,7 +56,7 @@ wss.on('connection', async function connection(ws, request) {
 
   ws.on('message', async function message(data) {
     const parsedData = JSON.parse(data as unknown as string)
-    console.log(parsedData);
+    console.log(parsedData)
     if (!parsedData) return;
 
     const user = users.get(userId);
@@ -125,32 +125,125 @@ wss.on('connection', async function connection(ws, request) {
       }
     }
 
-    if (parsedData.type === "chat") {
-      const roomId = parsedData.roomId
-      const message = parsedData.message
-
-      for (let [k, v] of users) {
-        if (v.rooms.includes(roomId) && v.ws === ws) {
-          v.status = !v.status
-          v.message = message
-        }
-      }
-      const members: { username: string, color: string, x: number, y: number, status: boolean, message: string }[] = [];
-      for (let [k, v] of users) {
-        if (v.rooms.includes(parsedData.roomId)) {
-          const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
-          members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y, status: v.status, message: v.message });
-        }
-      }
-      for (let [k, v] of users) {
+    if (parsedData.type === "shape") {
+      console.log(parsedData.data);
+      for (let [k,v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
           v.ws.send(JSON.stringify({
-            type: "user_updates",
-            members
+            type : "shape",
+            shape : parsedData.data
           }))
         }
       }
+
+      switch (parsedData.data.type) {
+        case "rect":
+          await prisma.shape.create({
+            data : {
+              type : "rect",
+              roomId : parsedData.roomId,
+              rect : {
+                create : {
+                  height : parsedData.data.height,
+                  width : parsedData.data.width,
+                  x : parsedData.data.x,
+                  y : parsedData.data.y
+                }
+              }
+            }
+          })   
+          break;
+        case "line":
+          await prisma.shape.create({
+            data : {
+              type : "line",
+              roomId : parsedData.roomId,
+              line : {
+                create : {
+                  x1 : parsedData.data.x1,
+                  x2 : parsedData.data.x2,
+                  y1 : parsedData.data.y1,
+                  y2 : parsedData.data.y2
+                }
+              }
+            }
+          })
+          break;
+        case 'circle':
+          await prisma.shape.create({
+            data : {
+              type : "circle",
+              roomId : parsedData.roomId,
+              circle : {
+                create : {
+                  radius : Number(parsedData.data.radius),
+                  x : parsedData.data.x,
+                  y : parsedData.data.y
+                }
+              }
+            }
+          })
+          break;
+        case "text":
+          await prisma.shape.create({
+            data : {
+              type : "text",
+              roomId : parsedData.roomId,
+              text : {
+                create : {
+                  text : parsedData.data.text,
+                  x1 : parsedData.data.x1,
+                  y1 : parsedData.data.y1
+                }
+              }
+            }
+          })
+          break;
+        case "free":
+          await prisma.shape.create({
+            data : {
+              type : "free",
+              roomId : parsedData.roomId,
+              free : {
+                create : {
+                  path : parsedData.path
+                }
+              }
+            }
+          })
+        default:
+          break;
+      }
     }
+
+    // if (parsedData.type === "chat") {
+    //   const roomId = parsedData.roomId
+    //   const message = parsedData.message
+
+    //   for (let [k, v] of users) {
+    //     if (v.rooms.includes(roomId) && v.ws === ws) {
+    //       v.status = !v.status
+    //       v.message = message
+    //     }
+    //   }
+    //   const members: { username: string, color: string, x: number, y: number, status: boolean, message: string }[] = [];
+    //   for (let [k, v] of users) {
+    //     if (v.rooms.includes(parsedData.roomId)) {
+    //       const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
+    //       members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y, status: v.status, message: v.message });
+    //     }
+    //   }
+    //   for (let [k, v] of users) {
+    //     if (v.rooms.includes(parsedData.roomId)) {
+    //       v.ws.send(JSON.stringify({
+    //         type: "user_updates",
+    //         members
+    //       }))
+    //     }
+    //   }
+    // }
+
+
   });
 
 });
