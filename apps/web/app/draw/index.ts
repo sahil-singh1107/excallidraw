@@ -16,10 +16,13 @@ type Shape = {
     y: number
     radius: number
 } | {
-    type : "text",
-    x1 : number
-    y1 : number
-    text : string | null
+    type: "text",
+    x1: number
+    y1: number
+    text: string | null
+} | {
+    type: "free",
+    path: { x: number, y: number }[];
 };
 
 const shapes: Shape[] = [];
@@ -58,8 +61,18 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
             }
             else if (shape.type === "text") {
                 ctx.fillStyle = "#fff";
-                ctx.font = "80px Arial"; 
+                ctx.font = "80px Arial";
                 ctx.fillText(shape.text || "", shape.x1, shape.y1);
+            }
+            else if (shape.type === "free") {
+                ctx.beginPath();
+                ctx.moveTo(shape.path[0].x, shape.path[0].y);
+                shape.path.forEach(point => {
+                    ctx.lineTo(point.x, point.y);
+                });
+                ctx.strokeStyle = "#fff";
+                ctx.lineWidth = 2; // Line width for the pen tool
+                ctx.stroke();
             }
         });
     }
@@ -152,7 +165,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
                 clicked = false;
                 shapes.push({ type: "circle", x, y, radius })
                 clearAndRedraw();
-                
+
             }
         });
     }
@@ -177,13 +190,47 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
         canvas.addEventListener("mouseup", (e) => {
             if (clicked) {
                 clicked = false;
-                const text  = prompt();
-                shapes.push({type : "text", x1, y1, text})
+                const text = prompt();
+                shapes.push({ type: "text", x1, y1, text })
                 clearAndRedraw();
             }
 
         })
     }
 
+    else if (shapeType === "free") {
+        let currentPath: { x: number; y: number }[] = [];
+
+        canvas.addEventListener("mousedown", (e) => {
+            clicked = true
+            currentPath = [{ x: 2 * e.clientX, y: 2 * e.clientY }];
+        })
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (clicked) {
+                clearAndRedraw();
+                currentPath.push({ x: 2 * e.clientX, y: 2 * e.clientY });
+                ctx.beginPath();
+                ctx.moveTo(currentPath[0].x, currentPath[0].y);
+                currentPath.forEach(point => {
+                    ctx.lineTo(point.x, point.y);
+                });
+                ctx.strokeStyle = "#fff";
+                ctx.lineWidth = 2; 
+                ctx.stroke();
+                
+            }
+        })
+
+        canvas.addEventListener("mouseup", () => {
+            if (clicked) {
+                clicked = false;
+                shapes.push({ type: "free", path: currentPath });
+                currentPath = [];
+                clearAndRedraw();
+            }
+        });
+
+    }
 
 }

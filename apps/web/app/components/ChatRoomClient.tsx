@@ -136,7 +136,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, }) => {
     }
 
     if (canvasRef.current) {
-      initDraw(canvasRef.current, id, socket!, "text");
+      initDraw(canvasRef.current, id, socket!, "free");
     }
 
   }, [socket, loading, id])
