@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSocket } from "../hooks/useSocket";
 import Avatar from "./Avatar";
 import throttle from "lodash/throttle";
+import Canvas from "./Canvas";
 
 interface ChatRoomClientProps {
   id: number;
@@ -108,37 +109,11 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id }) => {
             >
               <img src="/cursor.svg" alt="" style={{ color: member.color }} />
             </div>
-            {/* {
-              member.username === myName ? (<input ref={inputRef} className={`absolute rounded-[20px] text-white text-sm p-3 shadow-lg`} style={{
-                left: `${member.x}px`,
-                top: `${member.y + 30}px`,
-                transform: "translate(-50%, 0)",
-                pointerEvents: "none",
-                backgroundColor: member.color,
-                borderColor: member.color
-              }}
-                value={currentMessage}
-                onChange={(e) => {
-                  setCurrentMessage(e.target.value)
-                }}
-              />) : <input
-
-                className={`absolute rounded-[20px] text-white text-sm p-3 shadow-lg`}
-                style={{
-                  left: `${member.x}px`,
-                  top: `${member.y + 30}px`,
-                  transform: "translate(-50%, 0)",
-                  pointerEvents: "none",
-                  backgroundColor: member.color,
-                  borderColor: member.color
-                }}
-                placeholder=""
-                value={member.message}
-              />
-            } */}
+            
           </li>
         ))}
       </ul>
+      <Canvas/>
     </div>
   );
 };
