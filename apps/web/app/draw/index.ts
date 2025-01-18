@@ -15,6 +15,11 @@ type Shape = {
     x: number
     y: number
     radius: number
+} | {
+    type : "text",
+    x1 : number
+    y1 : number
+    text : string | null
 };
 
 const shapes: Shape[] = [];
@@ -39,17 +44,22 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
                 ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
             }
             else if (shape.type === "line") {
-                ctx.beginPath(); // Add this line to begin a new path for each line
+                ctx.beginPath();
                 ctx.moveTo(shape.x1, shape.y1);
                 ctx.lineTo(shape.x2, shape.y2);
                 ctx.strokeStyle = "#fff";
                 ctx.stroke();
             }
             else if (shape.type === "circle") {
-                ctx.beginPath(); // Add this line to ensure a new path for each circle
+                ctx.beginPath();
                 ctx.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI);
                 ctx.strokeStyle = "#fff";
                 ctx.stroke();
+            }
+            else if (shape.type === "text") {
+                ctx.fillStyle = "#fff";
+                ctx.font = "80px Arial"; 
+                ctx.fillText(shape.text || "", shape.x1, shape.y1);
             }
         });
     }
@@ -99,7 +109,9 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
                 y2 = (e.clientY * 2);
                 clearAndRedraw();
                 ctx.beginPath();
+
                 ctx.moveTo(x1, y1);
+
                 ctx.lineTo(x2, y2);
                 ctx.strokeStyle = "#fff";
                 ctx.stroke();
@@ -140,7 +152,38 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
                 clicked = false;
                 shapes.push({ type: "circle", x, y, radius })
                 clearAndRedraw();
+                
             }
         });
     }
+
+    else if (shapeType === "text") {
+        let x1: number, y1: number;
+
+        canvas.addEventListener("mousedown", (e) => {
+            clicked = true;
+            x1 = 2 * e.clientX;
+            y1 = 2 * e.clientY;
+        })
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (clicked) {
+                clearAndRedraw();
+                ctx.strokeStyle = '#fff';
+                ctx.strokeRect(x1, y1, 2 * e.clientX - x1, 80);
+            }
+        })
+
+        canvas.addEventListener("mouseup", (e) => {
+            if (clicked) {
+                clicked = false;
+                const text  = prompt();
+                shapes.push({type : "text", x1, y1, text})
+                clearAndRedraw();
+            }
+
+        })
+    }
+
+
 }
