@@ -4,7 +4,7 @@ import { prisma } from "@repo/db/client";
 
 const chatRouter : Router = express.Router();
 
-chatRouter.get("/chats/:roomId", authMiddleware, async function (req : IGetUserAuthInfoRequest, res) {
+chatRouter.get("/chats/:roomId", async function (req : IGetUserAuthInfoRequest, res) {
     const roomId = req.params.roomId
 
     try {

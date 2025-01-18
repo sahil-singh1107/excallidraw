@@ -1,6 +1,6 @@
 import ChatRoomClient from './ChatRoomClient'
 
-const ChatRoom = async ({id} : {id : number}) => {
+const RoomCanvas = async ({id} : {id : number}) => {
 
   return (
     <>
@@ -9,4 +9,4 @@ const ChatRoom = async ({id} : {id : number}) => {
   )
 }
 
-export default ChatRoom
+export default RoomCanvas

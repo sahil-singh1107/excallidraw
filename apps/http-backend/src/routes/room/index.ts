@@ -4,7 +4,7 @@ import { prisma } from "@repo/db/client";
 
 const roomRouter : Router = express.Router();
 
-roomRouter.get("/rooms/:slug", authMiddleware, async function (req, res) {
+roomRouter.get("/rooms/:slug", async function (req, res) {
     const slug = req.params.slug
 
     try {

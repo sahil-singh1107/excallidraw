@@ -1,11 +1,20 @@
+"use client"
+
 import { useEffect, useState } from "react";
 
-export function useSocket(token : string) {
+export function useSocket() {
     const [loading, setLoading] = useState<boolean>(true);
     const [socket, setSocket] = useState<WebSocket>();
 
+
     useEffect(() => {
-        const ws = new WebSocket(`ws://localhost:8080?token=${token}`)
+
+        const getToken = localStorage.getItem("token");
+        if (!getToken) {
+            return;
+        }
+
+        const ws = new WebSocket(`ws://localhost:8080?token=${getToken}`)
 
         ws.onopen = () => {
             setLoading(false);

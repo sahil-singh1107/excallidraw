@@ -23,7 +23,7 @@ const Page = () => {
     <div >
       <input value={roomId} onChange={(e) => { setRoomId(e.target.value) }} />
       <button onClick={() => {
-        router.push(`/room/${roomId}/${token}`)
+        router.push(`/room/${roomId}`)
       }}>join</button>
     </div>
   )

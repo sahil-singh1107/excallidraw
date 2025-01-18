@@ -56,6 +56,7 @@ wss.on('connection', async function connection(ws, request) {
 
   ws.on('message', async function message(data) {
     const parsedData = JSON.parse(data as unknown as string)
+    console.log(parsedData);
     if (!parsedData) return;
 
     const user = users.get(userId);
