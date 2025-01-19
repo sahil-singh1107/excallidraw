@@ -1,32 +1,41 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
 
-export function useSocket() {
+export function useSocket(roomId: number) {
     const [loading, setLoading] = useState<boolean>(true);
-    const [socket, setSocket] = useState<WebSocket>();
-
+    const [socket, setSocket] = useState<WebSocket | null>(null);
 
     useEffect(() => {
-
-        const getToken = localStorage.getItem("token");
-        if (!getToken) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.warn("No token found in localStorage.");
+            setLoading(false);
             return;
         }
 
-        const ws = new WebSocket(`ws://localhost:5000?token=${getToken}`)
+        const ws = new WebSocket(`ws://localhost:5000?token=${token}`);
 
         ws.onopen = () => {
-            console.log("connected")
+            console.log("WebSocket connected.");
             setLoading(false);
-            setSocket(ws);
-        }
-        ws.onclose = () => {
-            console.log("disconnected");
-        }
-    }, [])
+            ws.send(JSON.stringify({ type: "join_room", roomId }));
+        };
 
-    return {
-        socket, loading
-    }
+        ws.onclose = () => {
+            console.log("WebSocket disconnected.");
+        };
+
+        ws.onerror = (error) => {
+            console.error("WebSocket error:", error);
+        };
+
+        setSocket(ws);
+        return () => {
+            ws.close();
+            console.log("WebSocket connection closed.");
+        };
+    }, [roomId]); 
+
+    return { socket, loading };
 }

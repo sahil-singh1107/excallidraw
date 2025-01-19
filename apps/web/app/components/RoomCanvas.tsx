@@ -1,10 +1,13 @@
+"use client"
+import { useEffect } from 'react';
+import { useSocket } from '../hooks/useSocket';
 import ChatRoomClient from './ChatRoomClient'
 
-const RoomCanvas = async ({id} : {id : number}) => {
-
+const RoomCanvas = ({ id }: { id: number }) => {
+  const { socket, loading } = useSocket(id);
   return (
     <>
-        <ChatRoomClient id={id} />
+      <ChatRoomClient id={id} socket={socket!} />
     </>
   )
 }

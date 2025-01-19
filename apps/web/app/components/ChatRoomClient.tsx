@@ -1,28 +1,23 @@
 "use client"
 import React, { useEffect, useRef, useState } from "react";
 import Navbar from "./Navbar";
-import { useSocket } from "../hooks/useSocket";
-import { initDraw } from "../draw";
+import { DrawShape } from "../draw";
 import BottomBar from "./BottomBar";
 
 interface ChatRoomClientProps {
   id: number;
+  socket: WebSocket
 }
 
-export interface Member {
-  username: string;
-  color: string;
-  x: number;
-  y: number;
-  status: boolean
-  message: string
-}
 
-const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, }) => {
+
+const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   // const token = localStorage.getItem("token");
   // const [currentMessage, setCurrentMessage] = useState<string>("");
-  const [members, setMembers] = useState<Member[]>([]);
-  const { socket, loading } = useSocket();
+  
+  const [selected, setSelected] = useState<string>("rect");
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [drawShape, setDrawShape] = useState<DrawShape>()
   // const [cursorPos, setCursorPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   // const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -117,37 +112,25 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, }) => {
   // );
 
   useEffect(() => {
+      
+      if (canvasRef.current) {
+        const s = new DrawShape(canvasRef.current, id, "rect", socket);
 
-    if (socket) {
-      socket.send(JSON.stringify({
-        type: "join_room",
-        roomId: id
-      }))
+        setDrawShape(s);
 
-
-      socket.addEventListener("message", (e) => {
-        const parsedData = JSON.parse(e.data);
-        if (parsedData.type === "user_updates") {
-          setMembers(parsedData.members)
+        return () => {
+          s.destroy();
         }
-      })
+      }
+  }, [canvasRef]);
 
 
-
-    }
-
-    if (canvasRef.current) {
-      initDraw(canvasRef.current, id, socket!, "rect");
-    }
-
-  }, [socket, loading, id])
-
-  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   return <div className="min-h-screen bg-black">
-    <Navbar members={members} />
-    <canvas ref={canvasRef} height="100vh" width="100vw"></canvas>
-    <BottomBar/>
+    <Navbar socket={socket} />
+    {/* <BottomBar selected = {selected} setSelected = {setSelected} /> */}
+    <canvas ref={canvasRef} width={window.innerWidth} height={window.innerHeight}></canvas>
+
   </div>
 };
 
