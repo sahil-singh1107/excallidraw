@@ -18,13 +18,14 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   const [drawShape, setDrawShape] = useState<DrawShape>()
   const [strokeColor, setStrokeColor] = useState<string>("");
   const [backgroundColor, setBackgroundColor] = useState<string>("")
-
+  const [fillStyle, setFillStyle] = useState<string>("");
 
   useEffect(() => {
     drawShape?.setTool(selected);
     drawShape?.setStroke(strokeColor)
     drawShape?.setBack(backgroundColor);
-}, [selected, drawShape, strokeColor, backgroundColor]);
+    drawShape?.setFill(fillStyle)
+}, [selected, drawShape, strokeColor, backgroundColor, fillStyle]);
 
   useEffect(() => {
       
@@ -45,7 +46,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   return <div className="min-h-screen bg-black">
     <Navbar socket={socket} />
     <BottomBar selected = {selected} setSelected = {setSelected} />
-    { selected && <Sidebar strokeColor = {strokeColor} setStrokeColor = {setStrokeColor} backgroundColor = {backgroundColor} setBackgroundColor = {setBackgroundColor} />}
+    { selected && <Sidebar setFillStyle={setFillStyle} strokeColor = {strokeColor} setStrokeColor = {setStrokeColor} backgroundColor = {backgroundColor} setBackgroundColor = {setBackgroundColor} />}
     <canvas ref={canvasRef} width={window.innerWidth} height={window.innerHeight}></canvas>
 
   </div>

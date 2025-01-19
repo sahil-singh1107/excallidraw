@@ -8,6 +8,7 @@ type Shape = {
     height: number;
     fill : string;
     stroke : string
+    fillStyle : string
 } | {
     type: "circle";
     centerX: number;
@@ -15,6 +16,7 @@ type Shape = {
     radius: number;
     fill : string
     stroke : string
+    fillStyle : string
 } | {
     type: "line";
     initialX: number
@@ -37,6 +39,7 @@ export class DrawShape {
     private selectedTool: string
     private backgroundColor : string
     private strokeColor : string
+    private fillStyle : string
     private startX: number
     private startY: number
     private path: { x: number, y: number }[]
@@ -52,6 +55,7 @@ export class DrawShape {
         this.selectedTool = selectedTool
         this.backgroundColor = "white"
         this.strokeColor = "white"
+        this.fillStyle = "solid"
         this.socket = socket
         this.startX = 0
         this.startY = 0
@@ -73,6 +77,10 @@ export class DrawShape {
         if (color) this.backgroundColor  = color
     }
 
+    setFill(type : string) {
+        if (type) this.fillStyle = type
+    }
+
     initHandlers () {
         this.socket.onmessage = (e) => {
             const message = JSON.parse(e.data);
@@ -90,10 +98,10 @@ export class DrawShape {
 
         this.existingShapes.forEach((shape) => {
             if (shape.type === "rect") {
-                this.roughCanvas.rectangle(shape.x, shape.y, shape.width, shape.height, { fill: shape.fill, stroke : shape.stroke, strokeWidth : 5 });
+                this.roughCanvas.rectangle(shape.x, shape.y, shape.width, shape.height, { fill: shape.fill, stroke : shape.stroke, strokeWidth : 5, fillStyle : shape.fillStyle });
             }
             else if (shape.type === "circle") {
-                this.roughCanvas.circle(shape.centerX, shape.centerY, shape.radius * 2, { fill: shape.fill, stroke : shape.stroke, strokeWidth : 5 });
+                this.roughCanvas.circle(shape.centerX, shape.centerY, shape.radius * 2, { fill: shape.fill, stroke : shape.stroke, strokeWidth : 5, fillStyle : shape.fillStyle });
             }
             else if (shape.type === "line") {
                 this.roughCanvas.line(shape.initialX, shape.initialY, shape.finalX, shape.finalY, { stroke: shape.stroke, strokeWidth: 2 })
@@ -119,13 +127,13 @@ export class DrawShape {
             if (this.selectedTool === "rect") {
                 const width = e.clientX - this.startX, height = e.clientY - this.startY
 
-                this.roughCanvas.rectangle(this.startX, this.startY, width, height, { fill: this.backgroundColor, stroke : this.strokeColor, strokeWidth : 4 });
+                this.roughCanvas.rectangle(this.startX, this.startY, width, height, { fill: this.backgroundColor, stroke : this.strokeColor, strokeWidth : 4, fillStyle : this.fillStyle });
             }
             else if (this.selectedTool === "circle") {
                 //const centerX = (e.clientX - this.startX) / 2, centerY = (e.clientY - this.startY) / 2;
                 const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
 
-                this.roughCanvas.circle(this.startX, this.startY, dm, { fill: this.backgroundColor, stroke : this.strokeColor, strokeWidth : 4 });
+                this.roughCanvas.circle(this.startX, this.startY, dm, { fill: this.backgroundColor, stroke : this.strokeColor, strokeWidth : 4, fillStyle : this.fillStyle });
             }
             else if (this.selectedTool === "line") {
                 const rect = this.canvas.getBoundingClientRect();
@@ -151,10 +159,10 @@ export class DrawShape {
     mouseUpHandler = (e: MouseEvent) => {
         if (this.clicked) {
             this.clicked = false;
-            if (this.selectedTool === "rect") this.existingShapes.push({ type: "rect", x: this.startX, y: this.startY, height: e.clientY - this.startY, width: e.clientX - this.startX, fill : this.backgroundColor, stroke : this.strokeColor });
+            if (this.selectedTool === "rect") this.existingShapes.push({ type: "rect", x: this.startX, y: this.startY, height: e.clientY - this.startY, width: e.clientX - this.startX, fill : this.backgroundColor, stroke : this.strokeColor, fillStyle : this.fillStyle });
             else if (this.selectedTool === "circle") {
                 const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
-                this.existingShapes.push({ type: "circle", centerX: this.startX, centerY: this.startY, radius: dm / 2, fill : this.backgroundColor, stroke : this.strokeColor })
+                this.existingShapes.push({ type: "circle", centerX: this.startX, centerY: this.startY, radius: dm / 2, fill : this.backgroundColor, stroke : this.strokeColor, fillStyle : this.fillStyle })
             }
             else if (this.selectedTool === "line") {
                 const rect = this.canvas.getBoundingClientRect();
