@@ -17,8 +17,12 @@ export function useSocket() {
         const ws = new WebSocket(`ws://localhost:5000?token=${getToken}`)
 
         ws.onopen = () => {
+            console.log("connected")
             setLoading(false);
             setSocket(ws);
+        }
+        ws.onclose = () => {
+            console.log("disconnected");
         }
     }, [])
 

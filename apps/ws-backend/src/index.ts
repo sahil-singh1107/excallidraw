@@ -131,89 +131,11 @@ wss.on('connection', async function connection(ws, request) {
         if (v.rooms.includes(parsedData.roomId)) {
           v.ws.send(JSON.stringify({
             type : "shape",
-            shape : parsedData.data
+            data : parsedData.data
           }))
         }
       }
-
-      switch (parsedData.data.type) {
-        case "rect":
-          await prisma.shape.create({
-            data : {
-              type : "rect",
-              roomId : parsedData.roomId,
-              rect : {
-                create : {
-                  height : parsedData.data.height,
-                  width : parsedData.data.width,
-                  x : parsedData.data.x,
-                  y : parsedData.data.y
-                }
-              }
-            }
-          })   
-          break;
-        case "line":
-          await prisma.shape.create({
-            data : {
-              type : "line",
-              roomId : parsedData.roomId,
-              line : {
-                create : {
-                  x1 : parsedData.data.x1,
-                  x2 : parsedData.data.x2,
-                  y1 : parsedData.data.y1,
-                  y2 : parsedData.data.y2
-                }
-              }
-            }
-          })
-          break;
-        case 'circle':
-          await prisma.shape.create({
-            data : {
-              type : "circle",
-              roomId : parsedData.roomId,
-              circle : {
-                create : {
-                  radius : Number(parsedData.data.radius),
-                  x : parsedData.data.x,
-                  y : parsedData.data.y
-                }
-              }
-            }
-          })
-          break;
-        case "text":
-          await prisma.shape.create({
-            data : {
-              type : "text",
-              roomId : parsedData.roomId,
-              text : {
-                create : {
-                  text : parsedData.data.text,
-                  x1 : parsedData.data.x1,
-                  y1 : parsedData.data.y1
-                }
-              }
-            }
-          })
-          break;
-        case "free":
-          await prisma.shape.create({
-            data : {
-              type : "free",
-              roomId : parsedData.roomId,
-              free : {
-                create : {
-                  path : parsedData.path
-                }
-              }
-            }
-          })
-        default:
-          break;
-      }
+      //prisma.shape.create
     }
 
     // if (parsedData.type === "chat") {

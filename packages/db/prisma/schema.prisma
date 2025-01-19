@@ -37,55 +37,6 @@ model Shape {
   id     Int        @id @default(autoincrement())
   roomId Int
   room   Room       @relation(fields: [roomId], references: [id])
-  type   String
-  rect   Rectangle?
-  line   Line?
-  circle Circle?
-  text   Text?
-  free   Free?
+  data Json
 }
 
-model Rectangle {
-  id      Int   @id @default(autoincrement())
-  x       Int
-  y       Int
-  width   Int
-  height  Int
-  shapeId Int   @unique
-  shape   Shape @relation(fields: [shapeId], references: [id])
-}
-
-model Line {
-  id      Int   @id @default(autoincrement())
-  x1      Int
-  y1      Int
-  x2      Int
-  y2      Int
-  shapeId Int   @unique
-  shape   Shape @relation(fields: [shapeId], references: [id])
-}
-
-model Circle {
-  id      Int   @id @default(autoincrement())
-  x       Int
-  y       Int
-  radius  Int
-  shapeId Int   @unique
-  shape   Shape @relation(fields: [shapeId], references: [id])
-}
-
-model Text {
-  id      Int     @id @default(autoincrement())
-  x1      Int
-  y1      Int
-  text    String?
-  shapeId Int     @unique
-  shape   Shape   @relation(fields: [shapeId], references: [id])
-}
-
-model Free {
-  id      Int   @id @default(autoincrement())
-  path    Json
-  shapeId Int   @unique
-  shape   Shape @relation(fields: [shapeId], references: [id])
-}

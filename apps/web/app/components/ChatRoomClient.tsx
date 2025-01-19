@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Navbar from "./Navbar";
 import { useSocket } from "../hooks/useSocket";
 import { initDraw } from "../draw";
+import BottomBar from "./BottomBar";
 
 interface ChatRoomClientProps {
   id: number;
@@ -136,7 +137,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, }) => {
     }
 
     if (canvasRef.current) {
-      initDraw(canvasRef.current, id, socket!, "free");
+      initDraw(canvasRef.current, id, socket!, "rect");
     }
 
   }, [socket, loading, id])
@@ -146,6 +147,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, }) => {
   return <div className="min-h-screen bg-black">
     <Navbar members={members} />
     <canvas ref={canvasRef} height="100vh" width="100vw"></canvas>
+    <BottomBar/>
   </div>
 };
 

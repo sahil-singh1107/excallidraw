@@ -29,41 +29,18 @@ type Shape = {
 
 let shapes: Shape[] = [];
 
-function shareShape (socket : WebSocket, roomId : number) {
+function shareShape(socket: WebSocket, roomId: number) {
+
     socket.send(JSON.stringify({
-        type : "shape",
-        data : shapes.slice(-1)[0],
+        type: "shape",
+        data: shapes.slice(-1)[0],
         roomId
     }))
-}
 
-async function getShapes (roomId : number) {
-    const res  = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chat/shapes/${roomId}`) ;
-    console.log(res);
-    const getShapes : Shape[] = [];
-    res.data.map((data : Shape) => {
-        console.log(data);
-        if (data.type === "circle") {
-            getShapes.push({type : "circle", x : data.x, y : data.y, radius : data.radius})
-        }
-        else if (data.type === "free") {
-            getShapes.push({type : "free", path : data.path})
-        }
-
-        else if (data.type === "line") {
-            getShapes.push({type : "line", x1 : data.x1, x2 : data.x2, y1 : data.y1, y2 : data.y2})
-        }
-        else if (data.type === "rect") {
-            getShapes.push({type : "rect", height : data.height, width : data.width, x : data.x, y : data.y});
-        }
-        else if (data.type === "text") {
-            getShapes.push({type : "text", text : data.text, x1 : data.x1, y1 : data.y1});
-        }
-    })
-    shapes = getShapes;
 }
 
 export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket: WebSocket, shapeType: string) {
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     canvas.width = window.innerWidth * 2;
@@ -71,17 +48,17 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
     canvas.style.width = '100vw';
     canvas.style.height = '100vh';
 
-    let clicked = false;
-
-    getShapes(roomId);
-
-    socket.onmessage = (e) => {
-        const message = JSON.parse(e.data);
-        if (message.type === "shape") {
-            shapes.push(message.shape);
+    socket.addEventListener("message", (e) => {
+        const parsedData = JSON.parse(e.data);
+        console.log(parsedData.data);
+        if (parsedData.type === "shape") {
+            shapes.push(parsedData.data);
             clearAndRedraw();
         }
-    }
+       
+    })
+
+    let clicked = false;
 
     function clearAndRedraw() {
         if (!ctx) return;
@@ -264,9 +241,9 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: number, socket
                     ctx.lineTo(point.x, point.y);
                 });
                 ctx.strokeStyle = "#fff";
-                ctx.lineWidth = 2; 
+                ctx.lineWidth = 2;
                 ctx.stroke();
-                
+
             }
         })
 
