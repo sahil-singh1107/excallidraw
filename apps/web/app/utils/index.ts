@@ -11,7 +11,7 @@ export const options = [
         icon : LiaMousePointerSolid
     },
     {
-        name : "rectangle",
+        name : "rect",
         icon : RiRectangleLine
     },
     {
@@ -31,3 +31,8 @@ export const options = [
         icon : CiText
     }
 ]
+
+export const colors = ["#1f1e1f", "#E03030", "#2F9E44", "#1971C2", "#F18D00", "#white"]
+
+export const backgrounds = ["#FFC8C8", "#B3F2BA", "#A4D8FE", "#FFED98", "white"];
+
