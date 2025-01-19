@@ -113,7 +113,8 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
 
   useEffect(() => {
       
-      if (canvasRef.current) {
+      if (canvasRef.current && socket) {
+
         const s = new DrawShape(canvasRef.current, id, "rect", socket);
 
         setDrawShape(s);

@@ -31,6 +31,7 @@ export class DrawShape {
     private selectedTool: string
     private startX: number
     private startY: number
+    private path: { x: number, y: number }[]
 
     socket: WebSocket
 
@@ -44,22 +45,83 @@ export class DrawShape {
         this.socket = socket
         this.startX = 0
         this.startY = 0
+        this.path = []
+        this.initHandlers();
         this.initMouseHandler();
+        console.log(socket);
+    }
+
+    initHandlers () {
+        this.socket.onmessage = (e) => {
+            const message = JSON.parse(e.data);
+            
+            if (message.type === "shape") {
+                this.existingShapes.push(message.data);
+                this.clearAndRedraw();
+            }
+        }
+    }
+
+    clearAndRedraw() {
+        const ctx = this.canvas.getContext("2d");
+        ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.existingShapes.forEach((shape) => {
+            if (shape.type === "rect") {
+                this.roughCanvas.rectangle(shape.x, shape.y, shape.width, shape.height, { fill: "white", });
+            }
+            else if (shape.type === "circle") {
+                this.roughCanvas.circle(shape.centerX, shape.centerY, shape.radius * 2, { fill: "red" });
+            }
+            else if (shape.type === "line") {
+                this.roughCanvas.line(shape.initialX, shape.initialY, shape.finalX, shape.finalY, { stroke: "red", strokeWidth: 2 })
+            }
+            else {
+                for (let i = 1; i < shape.points.length; i++) {
+                    this.roughCanvas.line(shape.points[i - 1]?.x, shape.points[i - 1]?.y, shape.points[i]?.x, shape.points[i]?.y, { strokeWidth: 2, stroke: "red", strokeLineDash: [1, 6, 6,] });
+                }
+            }
+        })
     }
 
     mouseDownHandler = (e: MouseEvent) => {
         this.clicked = true
         this.startX = e.clientX
         this.startY = e.clientY
+        this.path.push({ x: this.startX, y: this.startY });
     }
 
     mouseMoveHandler = (e: MouseEvent) => {
         if (this.clicked) {
+            this.clearAndRedraw();
             if (this.selectedTool === "rect") {
                 const width = e.clientX - this.startX, height = e.clientY - this.startY
-                const ctx = this.canvas.getContext("2d");
-                ctx?.clearRect(0,0,this.canvas.width, this.canvas.height);
-                this.roughCanvas.rectangle(this.startX, this.startY, width, height, { fill: "red" });
+
+                this.roughCanvas.rectangle(this.startX, this.startY, width, height, { fill: "white", });
+            }
+            else if (this.selectedTool === "circle") {
+                //const centerX = (e.clientX - this.startX) / 2, centerY = (e.clientY - this.startY) / 2;
+                const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
+
+                this.roughCanvas.circle(this.startX, this.startY, dm, { fill: "red" });
+            }
+            else if (this.selectedTool === "line") {
+                const rect = this.canvas.getBoundingClientRect();
+                const startX = this.startX - rect.left;
+                const startY = this.startY - rect.top;
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+
+                this.roughCanvas.line(startX, startY, currentX, currentY, { strokeWidth: 2, stroke: "red" });
+            }
+            else if (this.selectedTool === "pen") {
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                this.path.push({ x: currentX, y: currentY });
+                for (let i = 1; i < this.path.length; i++) {
+                    this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y, { strokeWidth: 2, stroke: "red", strokeLineDash: [1, 6, 6,] });
+                }
             }
         }
     }
@@ -67,7 +129,31 @@ export class DrawShape {
     mouseUpHandler = (e: MouseEvent) => {
         if (this.clicked) {
             this.clicked = false;
-            this.existingShapes.push({ type: "rect", x: this.startX, y: this.startY, height: e.clientY - this.startY, width: e.clientX - this.startX });
+            if (this.selectedTool === "rect") this.existingShapes.push({ type: "rect", x: this.startX, y: this.startY, height: e.clientY - this.startY, width: e.clientX - this.startX });
+            else if (this.selectedTool === "circle") {
+                const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
+                this.existingShapes.push({ type: "circle", centerX: this.startX, centerY: this.startY, radius: dm / 2 })
+            }
+            else if (this.selectedTool === "line") {
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                this.existingShapes.push({ type: "line", initialX: this.startX, initialY: this.startY, finalX: currentX, finalY: currentY })
+            }
+            else if (this.selectedTool === "pen") {
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                this.path.push({ x: currentX, y: currentY });
+                this.existingShapes.push({ type: "pen", points: this.path });
+            }
+            this.path = [];
+            this.socket.send(JSON.stringify({
+                type: "shape",
+                data: this.existingShapes.slice(-1)[0],
+                roomId : this.roomId
+            }))
+
         }
     }
 
