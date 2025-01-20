@@ -5,6 +5,7 @@ import { IoAnalyticsOutline } from "react-icons/io5";
 import { TiPen } from "react-icons/ti";
 import { CiText } from "react-icons/ci";
 import { PiPolygonBold } from "react-icons/pi";
+import { CiEraser } from "react-icons/ci";
 export const options = [
     {
         name: "select",
@@ -33,6 +34,10 @@ export const options = [
     {
         name : "polygon",
         icon : PiPolygonBold
+    },
+    {
+        name : "eraser",
+        icon : CiEraser
     }
 ]
 
