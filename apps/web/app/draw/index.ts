@@ -1,5 +1,4 @@
 import rough from "roughjs"
-import { number } from "zod";
 
 type Shape = {
     type: "rect";
@@ -10,6 +9,7 @@ type Shape = {
     fill : string;
     stroke : string
     fillStyle : string
+    sw : number
 } | {
     type: "circle";
     centerX: number;
@@ -18,6 +18,7 @@ type Shape = {
     fill : string
     stroke : string
     fillStyle : string
+    sw : number
 } | {
     type: "line";
     initialX: number
@@ -25,15 +26,18 @@ type Shape = {
     finalX: number
     finalY: number
     stroke : string
+    sw : number
 } | {
     type: "pen",
     points: { x: number, y: number }[]
     stroke : string
+    sw : number
 } | {
     type : "polygon",
     points :[number, number][]
     fill : string
     stroke : string
+    sw : number
 }
 
 export class DrawShape {
@@ -44,6 +48,7 @@ export class DrawShape {
     private clicked: boolean
     private selectedTool: string
     private backgroundColor : string
+    private strokeWidth : number
     private strokeColor : string
     private fillStyle : string
     private startX: number
@@ -61,6 +66,7 @@ export class DrawShape {
         this.clicked = false
         this.selectedTool = selectedTool
         this.backgroundColor = "white"
+        this.strokeWidth = 0
         this.strokeColor = "white"
         this.fillStyle = "solid"
         this.socket = socket
@@ -89,6 +95,10 @@ export class DrawShape {
         if (type) this.fillStyle = type
     }
 
+    setStrokeWidth (w : number) {
+        this.strokeWidth = w
+    }
+
     initHandlers () {
         this.socket.onmessage = (e) => {
             const message = JSON.parse(e.data);
@@ -106,20 +116,20 @@ export class DrawShape {
 
         this.existingShapes.forEach((shape) => {
             if (shape.type === "rect") {
-                this.roughCanvas.rectangle(shape.x, shape.y, shape.width, shape.height, { fill: shape.fill, stroke : shape.stroke, strokeWidth : 5, fillStyle : shape.fillStyle });
+                this.roughCanvas.rectangle(shape.x, shape.y, shape.width, shape.height, { fill: shape.fill, stroke : shape.stroke, strokeWidth : shape.sw, fillStyle : shape.fillStyle });
             }
             else if (shape.type === "circle") {
-                this.roughCanvas.circle(shape.centerX, shape.centerY, shape.radius * 2, { fill: shape.fill, stroke : shape.stroke, strokeWidth : 5, fillStyle : shape.fillStyle });
+                this.roughCanvas.circle(shape.centerX, shape.centerY, shape.radius * 2, { fill: shape.fill, stroke : shape.stroke, strokeWidth : shape.sw, fillStyle : shape.fillStyle });
             }
             else if (shape.type === "line") {
-                this.roughCanvas.line(shape.initialX, shape.initialY, shape.finalX, shape.finalY, { stroke: shape.stroke, strokeWidth: 2 })
+                this.roughCanvas.line(shape.initialX, shape.initialY, shape.finalX, shape.finalY, { stroke: shape.stroke, strokeWidth: shape.sw })
             }
             else if (shape.type === "polygon") {
-                this.roughCanvas.polygon(shape.points, {fill : shape.fill, stroke : shape.stroke})
+                this.roughCanvas.polygon(shape.points, {fill : shape.fill, stroke : shape.stroke, strokeWidth : shape.sw})
             }
             else {
                 for (let i = 1; i < shape.points.length; i++) {
-                    this.roughCanvas.line(shape.points[i - 1]?.x, shape.points[i - 1]?.y, shape.points[i]?.x, shape.points[i]?.y, { strokeWidth: 2, stroke: shape.stroke, strokeLineDash: [1, 6, 6,] });
+                    this.roughCanvas.line(shape.points[i - 1]?.x, shape.points[i - 1]?.y, shape.points[i]?.x, shape.points[i]?.y, { strokeWidth: shape.sw, stroke: shape.stroke, strokeLineDash: [1, 6, 6,] });
                 }
             }
 
@@ -140,13 +150,13 @@ export class DrawShape {
             if (this.selectedTool === "rect") {
                 const width = e.clientX - this.startX, height = e.clientY - this.startY
 
-                this.roughCanvas.rectangle(this.startX, this.startY, width, height, { fill: this.backgroundColor, stroke : this.strokeColor, strokeWidth : 4, fillStyle : this.fillStyle });
+                this.roughCanvas.rectangle(this.startX, this.startY, width, height, { fill: this.backgroundColor, stroke : this.strokeColor, strokeWidth : this.strokeWidth, fillStyle : this.fillStyle });
             }
             else if (this.selectedTool === "circle") {
                 //const centerX = (e.clientX - this.startX) / 2, centerY = (e.clientY - this.startY) / 2;
                 const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
 
-                this.roughCanvas.circle(this.startX, this.startY, dm, { fill: this.backgroundColor, stroke : this.strokeColor, strokeWidth : 4, fillStyle : this.fillStyle });
+                this.roughCanvas.circle(this.startX, this.startY, dm, { fill: this.backgroundColor, stroke : this.strokeColor, strokeWidth : this.strokeWidth, fillStyle : this.fillStyle });
             }
             else if (this.selectedTool === "line") {
                 const rect = this.canvas.getBoundingClientRect();
@@ -155,7 +165,7 @@ export class DrawShape {
                 const currentX = e.clientX - rect.left;
                 const currentY = e.clientY - rect.top;
 
-                this.roughCanvas.line(startX, startY, currentX, currentY, { strokeWidth: 2, stroke: "red" });
+                this.roughCanvas.line(startX, startY, currentX, currentY, { strokeWidth: this.strokeWidth, stroke: "red" });
             }
             else if (this.selectedTool === "pen") {
                 const rect = this.canvas.getBoundingClientRect();
@@ -163,7 +173,7 @@ export class DrawShape {
                 const currentY = e.clientY - rect.top;
                 this.path.push({ x: currentX, y: currentY });
                 for (let i = 1; i < this.path.length; i++) {
-                    this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y, { strokeWidth: 2, stroke: "red", strokeLineDash: [1, 6, 6,] });
+                    this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y, { strokeWidth: this.strokeWidth, stroke: "red", strokeLineDash: [1, 6, 6,] });
                 }
             }
             else if (this.selectedTool === "polygon") {
@@ -171,7 +181,7 @@ export class DrawShape {
                 const currentX = e.clientX - rect.left;
                 const currentY = e.clientY - rect.top;
                 this.points.push([currentX, currentY]);
-                this.roughCanvas.polygon(this.points, {fill : this.backgroundColor, stroke : this.strokeColor, strokeWidth : 4});
+                this.roughCanvas.polygon(this.points, {fill : this.backgroundColor, stroke : this.strokeColor, strokeWidth : this.strokeWidth});
             }
         }
     }
@@ -179,30 +189,30 @@ export class DrawShape {
     mouseUpHandler = (e: MouseEvent) => {
         if (this.clicked) {
             this.clicked = false;
-            if (this.selectedTool === "rect") this.existingShapes.push({ type: "rect", x: this.startX, y: this.startY, height: e.clientY - this.startY, width: e.clientX - this.startX, fill : this.backgroundColor, stroke : this.strokeColor, fillStyle : this.fillStyle });
+            if (this.selectedTool === "rect") this.existingShapes.push({ type: "rect", x: this.startX, y: this.startY, height: e.clientY - this.startY, width: e.clientX - this.startX, fill : this.backgroundColor, stroke : this.strokeColor, fillStyle : this.fillStyle, sw : this.strokeWidth });
             else if (this.selectedTool === "circle") {
                 const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
-                this.existingShapes.push({ type: "circle", centerX: this.startX, centerY: this.startY, radius: dm / 2, fill : this.backgroundColor, stroke : this.strokeColor, fillStyle : this.fillStyle })
+                this.existingShapes.push({ type: "circle", centerX: this.startX, centerY: this.startY, radius: dm / 2, fill : this.backgroundColor, stroke : this.strokeColor, fillStyle : this.fillStyle, sw : this.strokeWidth })
             }
             else if (this.selectedTool === "line") {
                 const rect = this.canvas.getBoundingClientRect();
                 const currentX = e.clientX - rect.left;
                 const currentY = e.clientY - rect.top;
-                this.existingShapes.push({ type: "line", initialX: this.startX, initialY: this.startY, finalX: currentX, finalY: currentY, stroke : this.strokeColor })
+                this.existingShapes.push({ type: "line", initialX: this.startX, initialY: this.startY, finalX: currentX, finalY: currentY, stroke : this.strokeColor, sw : this.strokeWidth })
             }
             else if (this.selectedTool === "pen") {
                 const rect = this.canvas.getBoundingClientRect();
                 const currentX = e.clientX - rect.left;
                 const currentY = e.clientY - rect.top;
                 this.path.push({ x: currentX, y: currentY });
-                this.existingShapes.push({ type: "pen", points: this.path, stroke : this.strokeColor });
+                this.existingShapes.push({ type: "pen", points: this.path, stroke : this.strokeColor, sw : this.strokeWidth });
             }
             else if (this.selectedTool === "polygon") {
                 const rect = this.canvas.getBoundingClientRect();
                 const currentX = e.clientX - rect.left;
                 const currentY = e.clientY - rect.top;
                 this.points.push([currentX, currentY]);
-                this.existingShapes.push({type : "polygon", points : this.points, fill : this.backgroundColor,  stroke : this.strokeColor});
+                this.existingShapes.push({type : "polygon", points : this.points, fill : this.backgroundColor,  stroke : this.strokeColor, sw : this.strokeWidth});
             }
             this.path = [];
             this.points = [];

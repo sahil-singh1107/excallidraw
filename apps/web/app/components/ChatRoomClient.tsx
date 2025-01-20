@@ -19,13 +19,15 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   const [strokeColor, setStrokeColor] = useState<string>("");
   const [backgroundColor, setBackgroundColor] = useState<string>("")
   const [fillStyle, setFillStyle] = useState<string>("");
+  const [strokeWidth, setStrokeWidth] = useState<number>(0);
 
   useEffect(() => {
     drawShape?.setTool(selected);
     drawShape?.setStroke(strokeColor)
     drawShape?.setBack(backgroundColor);
     drawShape?.setFill(fillStyle)
-}, [selected, drawShape, strokeColor, backgroundColor, fillStyle]);
+    drawShape?.setStrokeWidth(strokeWidth)
+}, [selected, drawShape, strokeColor, backgroundColor, fillStyle, strokeWidth]);
 
   useEffect(() => {
       
@@ -46,7 +48,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   return <div className="min-h-screen bg-black">
     <Navbar socket={socket} />
     <BottomBar selected = {selected} setSelected = {setSelected} />
-    { selected && <Sidebar setFillStyle={setFillStyle} strokeColor = {strokeColor} setStrokeColor = {setStrokeColor} backgroundColor = {backgroundColor} setBackgroundColor = {setBackgroundColor} />}
+    { selected && <Sidebar setFillStyle={setFillStyle} strokeColor = {strokeColor} setStrokeColor = {setStrokeColor} backgroundColor = {backgroundColor} setBackgroundColor = {setBackgroundColor} strokeWidth = {strokeWidth} setStrokeWidth = {setStrokeWidth} />}
     <canvas ref={canvasRef} width={window.innerWidth} height={window.innerHeight}></canvas>
 
   </div>
