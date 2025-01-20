@@ -1,4 +1,5 @@
 import rough from "roughjs"
+import { number } from "zod";
 
 type Shape = {
     type: "rect";
@@ -28,6 +29,11 @@ type Shape = {
     type: "pen",
     points: { x: number, y: number }[]
     stroke : string
+} | {
+    type : "polygon",
+    points :[number, number][]
+    fill : string
+    stroke : string
 }
 
 export class DrawShape {
@@ -43,6 +49,7 @@ export class DrawShape {
     private startX: number
     private startY: number
     private path: { x: number, y: number }[]
+    private points : [number, number][]
 
     socket: WebSocket
 
@@ -60,6 +67,7 @@ export class DrawShape {
         this.startX = 0
         this.startY = 0
         this.path = []
+        this.points = [0,0]
         this.initHandlers();
         this.initMouseHandler();
         console.log(socket);
@@ -106,11 +114,15 @@ export class DrawShape {
             else if (shape.type === "line") {
                 this.roughCanvas.line(shape.initialX, shape.initialY, shape.finalX, shape.finalY, { stroke: shape.stroke, strokeWidth: 2 })
             }
+            else if (shape.type === "polygon") {
+                this.roughCanvas.polygon(shape.points, {fill : shape.fill, stroke : shape.stroke})
+            }
             else {
                 for (let i = 1; i < shape.points.length; i++) {
                     this.roughCanvas.line(shape.points[i - 1]?.x, shape.points[i - 1]?.y, shape.points[i]?.x, shape.points[i]?.y, { strokeWidth: 2, stroke: shape.stroke, strokeLineDash: [1, 6, 6,] });
                 }
             }
+
         })
     }
 
@@ -119,6 +131,7 @@ export class DrawShape {
         this.startX = e.clientX
         this.startY = e.clientY
         this.path.push({ x: this.startX, y: this.startY });
+        this.points.push([this.startX, this.startY]);
     }
 
     mouseMoveHandler = (e: MouseEvent) => {
@@ -153,6 +166,13 @@ export class DrawShape {
                     this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y, { strokeWidth: 2, stroke: "red", strokeLineDash: [1, 6, 6,] });
                 }
             }
+            else if (this.selectedTool === "polygon") {
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                this.points.push([currentX, currentY]);
+                this.roughCanvas.polygon(this.points, {fill : this.backgroundColor, stroke : this.strokeColor, strokeWidth : 4});
+            }
         }
     }
 
@@ -177,7 +197,15 @@ export class DrawShape {
                 this.path.push({ x: currentX, y: currentY });
                 this.existingShapes.push({ type: "pen", points: this.path, stroke : this.strokeColor });
             }
+            else if (this.selectedTool === "polygon") {
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                this.points.push([currentX, currentY]);
+                this.existingShapes.push({type : "polygon", points : this.points, fill : this.backgroundColor,  stroke : this.strokeColor});
+            }
             this.path = [];
+            this.points = [];
             this.socket.send(JSON.stringify({
                 type: "shape",
                 data: this.existingShapes.slice(-1)[0],

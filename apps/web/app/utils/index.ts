@@ -4,7 +4,7 @@ import { FaRegCircle } from "react-icons/fa";
 import { IoAnalyticsOutline } from "react-icons/io5";
 import { TiPen } from "react-icons/ti";
 import { CiText } from "react-icons/ci";
-
+import { PiPolygonBold } from "react-icons/pi";
 export const options = [
     {
         name: "select",
@@ -29,6 +29,10 @@ export const options = [
     {
         name: "text",
         icon: CiText
+    },
+    {
+        name : "polygon",
+        icon : PiPolygonBold
     }
 ]
 
