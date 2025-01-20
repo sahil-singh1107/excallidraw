@@ -88,6 +88,20 @@ export class DrawShape {
             point.y <= rect.y + rect.height
         );
     }
+
+    isPointInCircle (point : {x: number, y : number}, circle : Shape) : boolean {
+        return (
+            Math.sqrt((point.x-circle.centerX)*(point.x-circle.centerX) + (point.y-circle.centerY)*(point.y-circle.centerY)) <= circle.radius
+        )
+    }
+
+    isPointInLine (point : {x : number, y : number}, line : Shape) : boolean {
+        return (
+            point.x >= line.initialX && point.x <= line.finalX && point.y >= line.initialY && point.y <= line.finalY
+        )
+    }
+
+
     
 
     setTool(tool: string) {
@@ -202,7 +216,7 @@ export class DrawShape {
                 const currentY = e.clientY - rect.top;
                 this.path.push({ x: currentX, y: currentY });
                 for (let i = 1; i < this.path.length; i++) {
-                    this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y, { strokeWidth: this.strokeWidth, stroke: "orange" });
+                    this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y);
                 }
             }
         }
@@ -242,6 +256,9 @@ export class DrawShape {
                     return !this.path.some((point) => {
                         if (shape.type === "rect") {
                             return this.isPointInRect(point, shape);
+                        }
+                        if (shape.type === "circle") {
+                            return this.isPointInCircle(point, shape)
                         }
                     })
                 })
