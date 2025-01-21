@@ -64,7 +64,6 @@ export class DrawShape {
     socket: WebSocket
 
     constructor(canvas: HTMLCanvasElement, roomId: number, selectedTool: string, socket: WebSocket) {
-        console.log("initilaized")
         this.canvas = canvas
         this.roughCanvas = rough.canvas(canvas)
         this.existingShapes = []
@@ -244,7 +243,6 @@ export class DrawShape {
         this.clicked = true
         this.startX = e.clientX
         this.startY = e.clientY
-        console.log(e);
         this.path.push({ x: this.startX, y: this.startY });
         this.points = [[this.startX, this.startY]];
     }

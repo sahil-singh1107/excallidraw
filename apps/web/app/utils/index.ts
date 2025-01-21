@@ -1,4 +1,4 @@
-import { Circle, CircleEllipsis, Eraser, Minus, MousePointer2, Octagon, Pen, Square, TypeOutline } from "lucide-react";
+import { Circle, CircleEllipsis, Eraser, Grab, Minus, MousePointer2, Octagon, Pen, Square, TypeOutline, Workflow } from "lucide-react";
 
 
 export const options = [
@@ -33,6 +33,14 @@ export const options = [
     {
         name : "eraser",
         icon : Eraser
+    },
+    {
+        name : "grab",
+        icon : Grab
+    },
+    {
+        name : "workflow",
+        icon : Workflow
     }
 ]
 
