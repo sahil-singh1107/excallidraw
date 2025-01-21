@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import Avatar from './Avatar';
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from "@/components/ui/hover-card"
+
 
 export interface Member {
     username: string;
@@ -33,12 +39,24 @@ const Navbar = ({ socket }: { socket: WebSocket }) => {
     }, [socket])
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-20 py-3">
+        <div className="fixed top-0 right-5 z-20 py-3">
             <div className="flex justify-center">
                 <ul className="flex space-x-12">
                     {members.map((member, i) => (
                         <li key={i}>
-                            <Avatar name={member.username} color={member.color} />
+                            <HoverCard>
+                                <HoverCardTrigger>
+                                    <Avatar>
+                                        <AvatarImage />
+                                        <AvatarFallback style={{ backgroundColor: member.color }}></AvatarFallback>
+                                    </Avatar>
+                                </HoverCardTrigger>
+                                <HoverCardContent className='text-center w-fit h-fit'>
+                                    {member.username}
+                                </HoverCardContent>
+                            </HoverCard>
+
+
                         </li>
                     ))}
                 </ul>

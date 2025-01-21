@@ -59,15 +59,16 @@ export class DrawShape {
     socket: WebSocket
 
     constructor(canvas: HTMLCanvasElement, roomId: number, selectedTool: string, socket: WebSocket) {
+        console.log("initilaized")
         this.canvas = canvas
         this.roughCanvas = rough.canvas(canvas)
         this.existingShapes = []
         this.roomId = roomId
         this.clicked = false
         this.selectedTool = selectedTool
-        this.backgroundColor = "white"
-        this.strokeWidth = 0
-        this.strokeColor = "white"
+        this.backgroundColor = "red"
+        this.strokeWidth = 2
+        this.strokeColor = "red"
         this.fillStyle = "solid"
         this.socket = socket
         this.startX = 0
@@ -89,20 +90,20 @@ export class DrawShape {
         );
     }
 
-    isPointInCircle (point : {x: number, y : number}, circle : Shape) : boolean {
+    isPointInCircle(point: { x: number, y: number }, circle: Shape): boolean {
         return (
-            Math.sqrt((point.x-circle.centerX)*(point.x-circle.centerX) + (point.y-circle.centerY)*(point.y-circle.centerY)) <= circle.radius
+            Math.sqrt((point.x - circle.centerX) * (point.x - circle.centerX) + (point.y - circle.centerY) * (point.y - circle.centerY)) <= circle.radius
         )
     }
 
-    isPointInLine (point : {x : number, y : number}, line : Shape) : boolean {
+    isPointInLine(point: { x: number, y: number }, line: Shape): boolean {
         return (
             point.x >= line.initialX && point.x <= line.finalX && point.y >= line.initialY && point.y <= line.finalY
         )
     }
 
 
-    
+
 
     setTool(tool: string) {
         if (tool) this.selectedTool = tool
@@ -135,6 +136,33 @@ export class DrawShape {
         }
     }
 
+    showToolTip(shape: Shape) {
+        const tooltip = document.createElement('div');
+        tooltip.style.position = 'absolute';
+        tooltip.style.background = 'rgba(0, 0, 0, 0.75)';
+        tooltip.style.color = 'white';
+        tooltip.style.padding = '5px';
+        tooltip.style.borderRadius = '5px';
+        tooltip.style.zIndex = '1000';
+
+        // Example content: display some basic information about the shape
+        tooltip.innerHTML = `
+            <p>rectangle</p>
+        `;
+
+        // Positioning the tooltip near the clicked shape
+        const { x, y } = shape; // Assuming the shape has x, y coordinates
+        tooltip.style.left = `${x + 10}px`;
+        tooltip.style.top = `${y + 10}px`;
+
+        document.body.appendChild(tooltip);
+
+        // Remove the tooltip after a few seconds
+        setTimeout(() => {
+            tooltip.remove();
+        }, 3000);
+    }
+
     clearAndRedraw() {
         const ctx = this.canvas.getContext("2d");
         ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -164,14 +192,26 @@ export class DrawShape {
     }
 
     mouseDownHandler = (e: MouseEvent) => {
+        if (this.selectedTool === "select") {
+            this.existingShapes.map((shape) => {
+                if (!shape) return false;
+                if (shape.type === "rect" && this.isPointInRect({ x: e.clientX, y: e.clientY }, shape)) {
+                    this.showToolTip(shape);
+                }
+            })
+        }
         this.clicked = true
         this.startX = e.clientX
         this.startY = e.clientY
+        console.log(e);
         this.path.push({ x: this.startX, y: this.startY });
         this.points = [[this.startX, this.startY]];
     }
 
     mouseMoveHandler = (e: MouseEvent) => {
+
+
+
         if (this.clicked) {
             this.clearAndRedraw();
             if (this.selectedTool === "rect") {

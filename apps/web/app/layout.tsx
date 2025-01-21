@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
-import {Molengo} from "next/font/google"
+import { Molengo } from "next/font/google"
 import "./globals.css";
 
-
 const geist = Molengo({
-  weight : "400"
+  weight: "400"
 })
 
 
@@ -15,14 +13,18 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children, 
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
       <body className={`${geist.className} tracking-wider`}>
-        {children}
+          
+          <main>
+            
+            {children}
+          </main>
       </body>
     </html>
   );

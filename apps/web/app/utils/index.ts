@@ -1,43 +1,38 @@
-import { LiaMousePointerSolid } from "react-icons/lia";
-import { RiRectangleLine } from "react-icons/ri";
-import { FaRegCircle } from "react-icons/fa";
-import { IoAnalyticsOutline } from "react-icons/io5";
-import { TiPen } from "react-icons/ti";
-import { CiText } from "react-icons/ci";
-import { PiPolygonBold } from "react-icons/pi";
-import { CiEraser } from "react-icons/ci";
+import { Circle, CircleEllipsis, Eraser, Minus, MousePointer2, Octagon, Pen, Square, TypeOutline } from "lucide-react";
+
+
 export const options = [
     {
         name: "select",
-        icon: LiaMousePointerSolid
+        icon: MousePointer2
     },
     {
         name: "rect",
-        icon: RiRectangleLine
+        icon: Square
     },
     {
         name: "circle",
-        icon: FaRegCircle
+        icon: Circle
     },
     {
         name: "line",
-        icon: IoAnalyticsOutline
+        icon: Minus
     },
     {
         name: "pen",
-        icon: TiPen
+        icon: Pen
     },
     {
         name: "text",
-        icon: CiText
+        icon: TypeOutline
     },
     {
         name : "polygon",
-        icon : PiPolygonBold
+        icon : Octagon
     },
     {
         name : "eraser",
-        icon : CiEraser
+        icon : Eraser
     }
 ]
 
