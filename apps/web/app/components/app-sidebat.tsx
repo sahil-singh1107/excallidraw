@@ -12,7 +12,7 @@ import { Dispatch, SetStateAction } from "react"
 
 export function AppSidebar({ setSelected, selected }: { setSelected: Dispatch<SetStateAction<string>>, selected: string }) {
     return (
-        <Sidebar className="w-[5%] h-fit m-3 hover:scale-105 transition duration-100" variant="floating" collapsible="offcanvas">
+        <Sidebar className="w-[5%] h-fit m-3 hover:scale-105 transition duration-100 z-20" variant="floating" collapsible="offcanvas">
             <SidebarContent className="bg-black rounded-lg">
                 <SidebarGroup>
                     <SidebarGroupContent>

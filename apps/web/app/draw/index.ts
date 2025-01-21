@@ -1,14 +1,4 @@
 import rough from "roughjs"
-import {
-    Menubar,
-    MenubarContent,
-    MenubarItem,
-    MenubarMenu,
-    MenubarSeparator,
-    MenubarShortcut,
-    MenubarTrigger,
-} from "@/components/ui/menubar"
-import { Input } from "@/components/ui/input"
 
 type Shape = {
     type: "rect";
@@ -48,6 +38,11 @@ type Shape = {
     fill: string
     stroke: string
     sw: number
+} | {
+    type: "text",
+    x : number,
+    y : number
+    content: string
 }
 
 export class DrawShape {
@@ -152,7 +147,6 @@ export class DrawShape {
         tooltip.style.left = `${shape.x + 30}px`;
         tooltip.style.top = `${shape.y + 30}px`;
 
-        // Helper to create a section with a color picker
         function createColorSection(inputColor: string, onChange: (value: string) => void) {
             const wrapper = document.createElement('div');
             wrapper.className = 'relative w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center';
@@ -176,19 +170,16 @@ export class DrawShape {
             return wrapper;
         }
 
-        // Stroke color picker
         const strokeColorSection = createColorSection(shape.stroke, (newColor) => {
             shape.stroke = newColor;
             this.clearAndRedraw();
         });
 
-        // Fill color picker
         const fillColorSection = createColorSection(shape.fill || '#000000', (newColor) => {
             shape.fill = newColor;
             this.clearAndRedraw();
         });
 
-        // Placeholder for menu button
         const menuButton = document.createElement('button');
         menuButton.className = 'w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white';
         menuButton.innerHTML = `
@@ -197,12 +188,12 @@ export class DrawShape {
     </svg>
 `;
 
-        // Append sections to the tooltip
+
         tooltip.appendChild(strokeColorSection);
         tooltip.appendChild(fillColorSection);
         tooltip.appendChild(menuButton);
 
-        // Append tooltip to the document body
+
         document.body.appendChild(tooltip);
 
 
@@ -227,6 +218,10 @@ export class DrawShape {
             }
             else if (shape.type === "polygon") {
                 this.roughCanvas.polygon(shape.points, { fill: shape.fill, stroke: shape.stroke, strokeWidth: shape.sw })
+            }
+            else if (shape.type === "text") {
+
+                ctx!.fillText(shape.content, shape.x, shape.y);
             }
             else {
                 for (let i = 1; i < shape.points.length; i++) {
@@ -305,6 +300,54 @@ export class DrawShape {
                     this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y);
                 }
             }
+            else if (this.selectedTool === "text") {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.style.position = "absolute";
+                input.style.left = `${e.clientX}px`;
+                input.style.top = `${e.clientY}px`;
+                input.style.fontSize = "16px";
+                input.style.border = "none";
+                input.style.background = "none";
+                input.style.color = this.strokeColor;
+                input.style.outline = "none";
+
+                document.body.appendChild(input);
+                input.focus();
+
+                // Add event listener for blur to finalize text
+                input.addEventListener("blur", () => {
+                    if (input.value.trim()) {
+                        this.existingShapes.push({
+                            type: "text",
+                            content: input.value.trim(),
+                            x : x,
+                            y : y
+                        });
+                        this.socket.send(
+                            JSON.stringify({
+                                type: "shape",
+                                data: this.existingShapes.slice(-1)[0],
+                                roomId: this.roomId,
+                            })
+                        );
+                        this.clearAndRedraw();
+                    }
+                    document.body.removeChild(input);
+                });
+
+                // Add event listener for Enter key to blur input
+                input.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        input.blur();
+                    }
+                });
+            }
+
         }
     }
 
@@ -368,9 +411,7 @@ export class DrawShape {
 
     destroy() {
         this.canvas.removeEventListener("mousedown", this.mouseDownHandler)
-
         this.canvas.removeEventListener("mouseup", this.mouseUpHandler)
-
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler)
     }
 }
