@@ -1,4 +1,14 @@
 import rough from "roughjs"
+import {
+    Menubar,
+    MenubarContent,
+    MenubarItem,
+    MenubarMenu,
+    MenubarSeparator,
+    MenubarShortcut,
+    MenubarTrigger,
+} from "@/components/ui/menubar"
+import { Input } from "@/components/ui/input"
 
 type Shape = {
     type: "rect";
@@ -138,30 +148,66 @@ export class DrawShape {
 
     showToolTip(shape: Shape) {
         const tooltip = document.createElement('div');
-        tooltip.style.position = 'absolute';
-        tooltip.style.background = 'rgba(0, 0, 0, 0.75)';
-        tooltip.style.color = 'white';
-        tooltip.style.padding = '5px';
-        tooltip.style.borderRadius = '5px';
-        tooltip.style.zIndex = '1000';
+        tooltip.className = 'absolute z-50 p-2 bg-black text-white rounded-full shadow-md flex items-center divide-x divide-gray-700';
+        tooltip.style.left = `${shape.x + 30}px`;
+        tooltip.style.top = `${shape.y + 30}px`;
 
-        // Example content: display some basic information about the shape
-        tooltip.innerHTML = `
-            <p>rectangle</p>
-        `;
+        // Helper to create a section with a color picker
+        function createColorSection(inputColor: string, onChange: (value: string) => void) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center';
 
-        // Positioning the tooltip near the clicked shape
-        const { x, y } = shape; // Assuming the shape has x, y coordinates
-        tooltip.style.left = `${x + 10}px`;
-        tooltip.style.top = `${y + 10}px`;
+            const colorPreview = document.createElement('div');
+            colorPreview.className = 'absolute w-8 h-8 rounded-full';
+            colorPreview.style.backgroundColor = inputColor;
 
+            const input = document.createElement('input');
+            input.type = 'color';
+            input.value = inputColor;
+            input.className = 'absolute inset-0 opacity-0 cursor-pointer';
+            input.addEventListener('input', (e) => {
+                const newColor = (e.target as HTMLInputElement).value;
+                colorPreview.style.backgroundColor = newColor;
+                onChange(newColor);
+            });
+
+            wrapper.appendChild(colorPreview);
+            wrapper.appendChild(input);
+            return wrapper;
+        }
+
+        // Stroke color picker
+        const strokeColorSection = createColorSection(shape.stroke, (newColor) => {
+            shape.stroke = newColor;
+            this.clearAndRedraw();
+        });
+
+        // Fill color picker
+        const fillColorSection = createColorSection(shape.fill || '#000000', (newColor) => {
+            shape.fill = newColor;
+            this.clearAndRedraw();
+        });
+
+        // Placeholder for menu button
+        const menuButton = document.createElement('button');
+        menuButton.className = 'w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white';
+        menuButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-6 h-6">
+        <path d="M3 12h18M3 6h18M3 18h18" />
+    </svg>
+`;
+
+        // Append sections to the tooltip
+        tooltip.appendChild(strokeColorSection);
+        tooltip.appendChild(fillColorSection);
+        tooltip.appendChild(menuButton);
+
+        // Append tooltip to the document body
         document.body.appendChild(tooltip);
 
-        // Remove the tooltip after a few seconds
-        setTimeout(() => {
-            tooltip.remove();
-        }, 3000);
+
     }
+
 
     clearAndRedraw() {
         const ctx = this.canvas.getContext("2d");
