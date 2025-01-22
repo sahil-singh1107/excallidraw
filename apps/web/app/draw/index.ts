@@ -40,8 +40,8 @@ type Shape = {
     sw: number
 } | {
     type: "text",
-    x : number,
-    y : number
+    x: number,
+    y: number
     content: string
 }
 
@@ -58,6 +58,7 @@ export class DrawShape {
     private fillStyle: string
     private startX: number
     private startY: number
+    private activeTooltip: HTMLDivElement | null = null;
     private path: { x: number, y: number }[]
     private points: [number, number][]
 
@@ -106,8 +107,27 @@ export class DrawShape {
         )
     }
 
+    isPointInPen(point: { x: number, y: number }, pen: Shape): boolean {
+        pen.points.map((p) => {
+            if (p.x === point.x && p.y === point.y) return true;
+        })
+        return false;
+    }
 
+    isPointInPolygon(point: { x: number, y: number }, polygon: Shape): boolean {
+        const { points } = polygon;
+        let isInside = false;
 
+        for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+            const [xi, yi] = points[i];
+            const [xj, yj] = points[j];
+            const intersect =
+                yi > point.y !== yj > point.y &&
+                point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
+            if (intersect) isInside = !isInside;
+        }
+        return isInside;
+    }
 
     setTool(tool: string) {
         if (tool) this.selectedTool = tool
@@ -141,7 +161,11 @@ export class DrawShape {
     }
 
     showToolTip(shape: Shape) {
+        if (this.activeTooltip) {
+            this.removeTooltip();
+        }
         const tooltip = document.createElement('div');
+        this.activeTooltip = tooltip
         tooltip.className = 'absolute z-50 p-2 bg-black text-white rounded-full shadow-md flex items-center divide-x divide-gray-700';
         tooltip.style.left = `${shape.x + 30}px`;
         tooltip.style.top = `${shape.y + 30}px`;
@@ -197,12 +221,24 @@ export class DrawShape {
 
 
     }
+    removeTooltip = () => {
+        if (this.activeTooltip) {
+            document.body.removeChild(this.activeTooltip);
+            this.activeTooltip = null;
+            document.removeEventListener('mousedown', this.handleClickOutside);
+        }
+    }
+
+    handleClickOutside = (event: MouseEvent) => {
+        if (this.activeTooltip && !this.activeTooltip.contains(event.target as Node)) {
+            this.removeTooltip();
+        }
+    }
 
 
     clearAndRedraw() {
         const ctx = this.canvas.getContext("2d");
         ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        console.log(this.existingShapes);
 
         this.existingShapes.forEach((shape) => {
             if (!shape) return;
@@ -240,17 +276,17 @@ export class DrawShape {
                 }
             })
         }
-        this.clicked = true
-        this.startX = e.clientX
-        this.startY = e.clientY
-        this.path.push({ x: this.startX, y: this.startY });
-        this.points = [[this.startX, this.startY]];
+        else if (this.selectedTool) {
+            this.clicked = true
+            this.startX = e.clientX
+            this.startY = e.clientY
+            this.path.push({ x: this.startX, y: this.startY });
+            this.points = [[this.startX, this.startY]];
+        }
+
     }
 
     mouseMoveHandler = (e: MouseEvent) => {
-
-
-
         if (this.clicked) {
             this.clearAndRedraw();
             if (this.selectedTool === "rect") {
@@ -298,53 +334,49 @@ export class DrawShape {
                     this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y);
                 }
             }
-            else if (this.selectedTool === "text") {
-                const rect = this.canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+            // else if (this.selectedTool === "text") {
+            //     const rect = this.canvas.getBoundingClientRect();
+            //     const x = e.clientX - rect.left;
+            //     const y = e.clientY - rect.top;
 
-                const input = document.createElement("input");
-                input.type = "text";
-                input.style.position = "absolute";
-                input.style.left = `${e.clientX}px`;
-                input.style.top = `${e.clientY}px`;
-                input.style.fontSize = "16px";
-                input.style.border = "none";
-                input.style.background = "none";
-                input.style.color = this.strokeColor;
-                input.style.outline = "none";
+            //     const input = document.createElement("input");
+            //     input.type = "text";
+            //     input.style.position = "absolute";
+            //     input.style.left = `${e.clientX}px`;
+            //     input.style.top = `${e.clientY}px`;
+            //     input.style.fontSize = "16px";
+            //     input.style.border = "none";
+            //     input.style.background = "none";
+            //     input.style.color = this.strokeColor;
+            //     input.style.outline = "none";
 
-                document.body.appendChild(input);
-                input.focus();
-
-                // Add event listener for blur to finalize text
-                input.addEventListener("blur", () => {
-                    if (input.value.trim()) {
-                        this.existingShapes.push({
-                            type: "text",
-                            content: input.value.trim(),
-                            x : x,
-                            y : y
-                        });
-                        this.socket.send(
-                            JSON.stringify({
-                                type: "shape",
-                                data: this.existingShapes.slice(-1)[0],
-                                roomId: this.roomId,
-                            })
-                        );
-                        this.clearAndRedraw();
-                    }
-                    document.body.removeChild(input);
-                });
-
-                // Add event listener for Enter key to blur input
-                input.addEventListener("keydown", (event) => {
-                    if (event.key === "Enter") {
-                        input.blur();
-                    }
-                });
-            }
+            //     document.body.appendChild(input);
+            //     input.focus();
+            //     input.addEventListener("blur", () => {
+            //         if (input.value.trim()) {
+            //             this.existingShapes.push({
+            //                 type: "text",
+            //                 content: input.value.trim(),
+            //                 x: x,
+            //                 y: y
+            //             });
+            //             this.socket.send(
+            //                 JSON.stringify({
+            //                     type: "shape",
+            //                     data: this.existingShapes.slice(-1)[0],
+            //                     roomId: this.roomId,
+            //                 })
+            //             );
+            //             this.clearAndRedraw();
+            //         }
+            //         document.body.removeChild(input);
+            //     });
+            //     input.addEventListener("keydown", (event) => {
+            //         if (event.key === "Enter") {
+            //             input.blur();
+            //         }
+            //     });
+            // }
 
         }
     }
@@ -387,8 +419,20 @@ export class DrawShape {
                         if (shape.type === "circle") {
                             return this.isPointInCircle(point, shape)
                         }
+                        if (shape.type === "line") {
+                            return this.isPointInCircle(point, shape);
+                        }
+                        if (shape.type === "pen") {
+                            return this.isPointInPen(point, shape);
+                        }
+                        if (shape.type === "polygon") {
+                            return this.isPointInPolygon(point, shape);
+                        }
                     })
                 })
+                this.clearAndRedraw();
+                this.path = []
+                return;
             }
             this.path = [];
             this.points = [];
@@ -405,6 +449,7 @@ export class DrawShape {
         this.canvas.addEventListener("mousedown", this.mouseDownHandler);
         this.canvas.addEventListener("mouseup", this.mouseUpHandler)
         this.canvas.addEventListener("mousemove", this.mouseMoveHandler);
+        this.canvas.addEventListener("click", this.handleClickOutside);
     }
 
     destroy() {

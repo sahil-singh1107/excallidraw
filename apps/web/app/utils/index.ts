@@ -38,10 +38,7 @@ export const options = [
         name : "grab",
         icon : Grab
     },
-    {
-        name : "workflow",
-        icon : Workflow
-    }
+
 ]
 
 export const colors = ["#1f1e1f", "#E03030", "#2F9E44", "#1971C2", "#F18D00", "#white"]
