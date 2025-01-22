@@ -49,6 +49,8 @@ export class DrawShape {
     private canvas: HTMLCanvasElement
     private roughCanvas
     private existingShapes: Shape[]
+    private edges: { first: number, second: number }[]
+    private selectedShapeIndex: number
     private roomId: number
     private clicked: boolean
     private selectedTool: string
@@ -58,6 +60,7 @@ export class DrawShape {
     private fillStyle: string
     private startX: number
     private startY: number
+    private draggedShape: Shape
     private activeTooltip: HTMLDivElement | null = null;
     private path: { x: number, y: number }[]
     private points: [number, number][]
@@ -68,6 +71,8 @@ export class DrawShape {
         this.canvas = canvas
         this.roughCanvas = rough.canvas(canvas)
         this.existingShapes = []
+        this.edges = []
+        this.selectedShapeIndex = -1
         this.roomId = roomId
         this.clicked = false
         this.selectedTool = selectedTool
@@ -78,6 +83,7 @@ export class DrawShape {
         this.socket = socket
         this.startX = 0
         this.startY = 0
+
         this.path = []
         this.points = [[0, 0]]
         this.initHandlers();
@@ -87,6 +93,7 @@ export class DrawShape {
 
 
     isPointInRect(point: { x: number; y: number }, rect: Shape): boolean {
+        if (rect.type !== "rect") return false;
         return (
             point.x >= rect.x &&
             point.x <= rect.x + rect.width &&
@@ -96,18 +103,21 @@ export class DrawShape {
     }
 
     isPointInCircle(point: { x: number, y: number }, circle: Shape): boolean {
+        if (circle.type !== "circle") return false;
         return (
             Math.sqrt((point.x - circle.centerX) * (point.x - circle.centerX) + (point.y - circle.centerY) * (point.y - circle.centerY)) <= circle.radius
         )
     }
 
     isPointInLine(point: { x: number, y: number }, line: Shape): boolean {
+        if (line.type !== "line") return false;
         return (
             point.x >= line.initialX && point.x <= line.finalX && point.y >= line.initialY && point.y <= line.finalY
         )
     }
 
     isPointInPen(point: { x: number, y: number }, pen: Shape): boolean {
+        if (pen.type !== "pen") return false;
         pen.points.map((p) => {
             if (p.x === point.x && p.y === point.y) return true;
         })
@@ -115,12 +125,13 @@ export class DrawShape {
     }
 
     isPointInPolygon(point: { x: number, y: number }, polygon: Shape): boolean {
+        if (polygon.type !== "polygon") return false;
         const { points } = polygon;
         let isInside = false;
-
+        if (!points) return false
         for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-            const [xi, yi] = points[i];
-            const [xj, yj] = points[j];
+            let xi = points[i][0], yi = points[i][1];
+            let xj = points[j][0], yj = points[j][1];
             const intersect =
                 yi > point.y !== yj > point.y &&
                 point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
@@ -154,7 +165,15 @@ export class DrawShape {
             const message = JSON.parse(e.data);
 
             if (message.type === "shape") {
-                this.existingShapes.push(message.data);
+                const exists = this.existingShapes.some(shape => JSON.stringify(shape) === JSON.stringify(message.data));
+                if (!exists) {
+                    this.existingShapes.push(message.data);
+                    this.clearAndRedraw();
+                }
+            }
+
+            if (message.type === "update_shapes") {
+                this.existingShapes = message.data
                 this.clearAndRedraw();
             }
         }
@@ -196,11 +215,13 @@ export class DrawShape {
         const strokeColorSection = createColorSection(shape.stroke, (newColor) => {
             shape.stroke = newColor;
             this.clearAndRedraw();
+            this.updateShapes()
         });
 
         const fillColorSection = createColorSection(shape.fill || '#000000', (newColor) => {
             shape.fill = newColor;
             this.clearAndRedraw();
+            this.updateShapes();
         });
 
         const menuButton = document.createElement('button');
@@ -221,6 +242,7 @@ export class DrawShape {
 
 
     }
+
     removeTooltip = () => {
         if (this.activeTooltip) {
             document.body.removeChild(this.activeTooltip);
@@ -269,25 +291,43 @@ export class DrawShape {
 
     mouseDownHandler = (e: MouseEvent) => {
         if (this.selectedTool === "select") {
-            this.existingShapes.map((shape) => {
+            this.existingShapes.map((shape, i) => {
                 if (!shape) return false;
-                if (shape.type === "rect" && this.isPointInRect({ x: e.clientX, y: e.clientY }, shape)) {
+                if (this.selectedShapeIndex === -1) {
+                    this.selectedShapeIndex = i;
+                }
+                else {
+                    console.log("connected")
+                    this.selectedShapeIndex = -1;
+                }
+                if (this.isPointInRect({ x: e.clientX, y: e.clientY }, shape) || this.isPointInCircle({ x: e.clientX, y: e.clientY }, shape) || this.isPointInLine({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPen({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
                     this.showToolTip(shape);
                 }
             })
         }
-        else if (this.selectedTool) {
+        else if (this.selectedTool === "grab") {
+            console.log("grab1")
+            this.clicked = true
+            this.startX = e.clientX
+            this.startY = e.clientY
+            this.existingShapes.map((shape) => {
+                if (!shape) return false;
+                if (this.isPointInRect({ x: e.clientX, y: e.clientY }, shape) || this.isPointInCircle({ x: e.clientX, y: e.clientY }, shape) || this.isPointInLine({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPen({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
+                    this.draggedShape = shape
+                }
+            })
+        }
+        else {
             this.clicked = true
             this.startX = e.clientX
             this.startY = e.clientY
             this.path.push({ x: this.startX, y: this.startY });
             this.points = [[this.startX, this.startY]];
         }
-
     }
 
     mouseMoveHandler = (e: MouseEvent) => {
-        if (this.clicked) {
+        if (this.clicked && this.selectedTool !== "grab") {
             this.clearAndRedraw();
             if (this.selectedTool === "rect") {
                 const width = e.clientX - this.startX, height = e.clientY - this.startY
@@ -334,50 +374,29 @@ export class DrawShape {
                     this.roughCanvas.line(this.path[i - 1]?.x, this.path[i - 1]?.y, this.path[i]?.x, this.path[i]?.y);
                 }
             }
-            // else if (this.selectedTool === "text") {
-            //     const rect = this.canvas.getBoundingClientRect();
-            //     const x = e.clientX - rect.left;
-            //     const y = e.clientY - rect.top;
-
-            //     const input = document.createElement("input");
-            //     input.type = "text";
-            //     input.style.position = "absolute";
-            //     input.style.left = `${e.clientX}px`;
-            //     input.style.top = `${e.clientY}px`;
-            //     input.style.fontSize = "16px";
-            //     input.style.border = "none";
-            //     input.style.background = "none";
-            //     input.style.color = this.strokeColor;
-            //     input.style.outline = "none";
-
-            //     document.body.appendChild(input);
-            //     input.focus();
-            //     input.addEventListener("blur", () => {
-            //         if (input.value.trim()) {
-            //             this.existingShapes.push({
-            //                 type: "text",
-            //                 content: input.value.trim(),
-            //                 x: x,
-            //                 y: y
-            //             });
-            //             this.socket.send(
-            //                 JSON.stringify({
-            //                     type: "shape",
-            //                     data: this.existingShapes.slice(-1)[0],
-            //                     roomId: this.roomId,
-            //                 })
-            //             );
-            //             this.clearAndRedraw();
-            //         }
-            //         document.body.removeChild(input);
-            //     });
-            //     input.addEventListener("keydown", (event) => {
-            //         if (event.key === "Enter") {
-            //             input.blur();
-            //         }
-            //     });
-            // }
-
+        }
+        else if (this.clicked && this.selectedTool === "grab") {
+            console.log("drag")
+            if (this.existingShapes.length === 0 || !this.draggedShape) return;
+            const rect = this.canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            if (this.draggedShape.type === "rect") {
+                this.draggedShape.x = currentX
+                this.draggedShape.y = currentY
+            }
+            if (this.draggedShape.type === "circle") {
+                this.draggedShape.centerX = currentX
+                this.draggedShape.centerY = currentY
+            }
+            if (this.draggedShape.type === "line") {
+                let lineLength = Math.sqrt((this.draggedShape.finalY - this.draggedShape.initialY) * (this.draggedShape.finalY - this.draggedShape.initialY) + (this.draggedShape.finalX - this.draggedShape.initialX) * (this.draggedShape.finalX - this.draggedShape.initialX));
+                this.draggedShape.initialX = currentX
+                this.draggedShape.initialY = currentY
+                this.draggedShape.finalX = currentX + lineLength
+                this.draggedShape.finalY = currentY + lineLength
+            }
+            this.clearAndRedraw()
         }
     }
 
@@ -431,7 +450,12 @@ export class DrawShape {
                     })
                 })
                 this.clearAndRedraw();
+                this.updateShapes();
                 this.path = []
+                return;
+            }
+            else if (this.selectedTool === "grab") {
+                this.updateShapes();
                 return;
             }
             this.path = [];
@@ -443,6 +467,14 @@ export class DrawShape {
             }))
 
         }
+    }
+
+    updateShapes() {
+        this.socket.send(JSON.stringify({
+            type: "update_shapes",
+            roomId: this.roomId,
+            data: this.existingShapes
+        }))
     }
 
     initMouseHandler() {

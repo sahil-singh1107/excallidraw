@@ -126,16 +126,28 @@ wss.on('connection', async function connection(ws, request) {
     }
 
     if (parsedData.type === "shape") {
-      console.log(parsedData.data);
-      for (let [k,v] of users) {
+      
+      for (let [k, v] of users) {
         if (v.rooms.includes(parsedData.roomId)) {
           v.ws.send(JSON.stringify({
-            type : "shape",
-            data : parsedData.data
+            type: "shape",
+            data: parsedData.data
           }))
         }
       }
       //prisma.shape.create
+    }
+
+    if (parsedData.type === "update_shapes") {
+      console.log(parsedData);
+      for (let [k, v] of users) {
+        if (v.rooms.includes(parsedData.roomId)) {
+          v.ws.send(JSON.stringify({
+            type: "update_shapes",
+            data: parsedData.data
+          }))
+        }
+      }
     }
 
     // if (parsedData.type === "chat") {

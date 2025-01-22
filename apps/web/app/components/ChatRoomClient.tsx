@@ -32,7 +32,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
 
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative">
+    <div className="h-screen w-full relative">
       <Navbar socket={socket} />
       <Sidebar selected={selected} setSelected={setSelected} />
 
