@@ -382,19 +382,23 @@ export class DrawShape {
             const currentX = e.clientX - rect.left;
             const currentY = e.clientY - rect.top;
             if (this.draggedShape.type === "rect") {
-                this.draggedShape.x = currentX
-                this.draggedShape.y = currentY
+                let x1 = (2*currentX-this.draggedShape.width)/2, y1 = (2*currentY - this.draggedShape.height)/2;
+                this.draggedShape.x = x1
+                this.draggedShape.y = y1
             }
             if (this.draggedShape.type === "circle") {
                 this.draggedShape.centerX = currentX
                 this.draggedShape.centerY = currentY
-            }
+            }   
             if (this.draggedShape.type === "line") {
-                let lineLength = Math.sqrt((this.draggedShape.finalY - this.draggedShape.initialY) * (this.draggedShape.finalY - this.draggedShape.initialY) + (this.draggedShape.finalX - this.draggedShape.initialX) * (this.draggedShape.finalX - this.draggedShape.initialX));
-                this.draggedShape.initialX = currentX
-                this.draggedShape.initialY = currentY
-                this.draggedShape.finalX = currentX + lineLength
-                this.draggedShape.finalY = currentY + lineLength
+                let lineLength = Math.sqrt((this.draggedShape.finalY - this.draggedShape.initialY) * (this.draggedShape.finalY - this.draggedShape.initialY) + (this.draggedShape.finalX - this.draggedShape.initialX) * (this.draggedShape.finalX - this.draggedShape.initialX))/2;
+                let angle = Math.atan2(
+                    this.draggedShape.finalY - this.draggedShape.initialY,
+                    this.draggedShape.finalX - this.draggedShape.initialX
+                );
+                let x1 = currentX - lineLength*Math.cos(angle), y1 = currentY - lineLength*Math.sin(angle);
+                let x2 = currentX + lineLength*Math.cos(angle), y2 = currentY + lineLength*Math.sin(angle);
+                this.draggedShape.initialX = x1, this.draggedShape.initialY = y1, this.draggedShape.finalX = x2, this.draggedShape.finalY = y2;
             }
             this.clearAndRedraw()
         }
