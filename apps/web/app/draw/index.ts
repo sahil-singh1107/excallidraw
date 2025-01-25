@@ -88,7 +88,6 @@ export class DrawShape {
         this.points = [[0, 0]]
         this.initHandlers();
         this.initMouseHandler();
-        console.log(socket);
     }
 
 
@@ -297,7 +296,6 @@ export class DrawShape {
                     this.selectedShapeIndex = i;
                 }
                 else {
-                    console.log("connected")
                     this.selectedShapeIndex = -1;
                 }
                 if (this.isPointInRect({ x: e.clientX, y: e.clientY }, shape) || this.isPointInCircle({ x: e.clientX, y: e.clientY }, shape) || this.isPointInLine({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPen({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
@@ -306,7 +304,6 @@ export class DrawShape {
             })
         }
         else if (this.selectedTool === "grab") {
-            console.log("grab1")
             this.clicked = true
             this.startX = e.clientX
             this.startY = e.clientY
@@ -376,28 +373,27 @@ export class DrawShape {
             }
         }
         else if (this.clicked && this.selectedTool === "grab") {
-            console.log("drag")
             if (this.existingShapes.length === 0 || !this.draggedShape) return;
             const rect = this.canvas.getBoundingClientRect();
             const currentX = e.clientX - rect.left;
             const currentY = e.clientY - rect.top;
             if (this.draggedShape.type === "rect") {
-                let x1 = (2*currentX-this.draggedShape.width)/2, y1 = (2*currentY - this.draggedShape.height)/2;
+                let x1 = (2 * currentX - this.draggedShape.width) / 2, y1 = (2 * currentY - this.draggedShape.height) / 2;
                 this.draggedShape.x = x1
                 this.draggedShape.y = y1
             }
             if (this.draggedShape.type === "circle") {
                 this.draggedShape.centerX = currentX
                 this.draggedShape.centerY = currentY
-            }   
+            }
             if (this.draggedShape.type === "line") {
-                let lineLength = Math.sqrt((this.draggedShape.finalY - this.draggedShape.initialY) * (this.draggedShape.finalY - this.draggedShape.initialY) + (this.draggedShape.finalX - this.draggedShape.initialX) * (this.draggedShape.finalX - this.draggedShape.initialX))/2;
+                let lineLength = Math.sqrt((this.draggedShape.finalY - this.draggedShape.initialY) * (this.draggedShape.finalY - this.draggedShape.initialY) + (this.draggedShape.finalX - this.draggedShape.initialX) * (this.draggedShape.finalX - this.draggedShape.initialX)) / 2;
                 let angle = Math.atan2(
                     this.draggedShape.finalY - this.draggedShape.initialY,
                     this.draggedShape.finalX - this.draggedShape.initialX
                 );
-                let x1 = currentX - lineLength*Math.cos(angle), y1 = currentY - lineLength*Math.sin(angle);
-                let x2 = currentX + lineLength*Math.cos(angle), y2 = currentY + lineLength*Math.sin(angle);
+                let x1 = currentX - lineLength * Math.cos(angle), y1 = currentY - lineLength * Math.sin(angle);
+                let x2 = currentX + lineLength * Math.cos(angle), y2 = currentY + lineLength * Math.sin(angle);
                 this.draggedShape.initialX = x1, this.draggedShape.initialY = y1, this.draggedShape.finalX = x2, this.draggedShape.finalY = y2;
             }
             this.clearAndRedraw()
@@ -407,7 +403,7 @@ export class DrawShape {
     mouseUpHandler = (e: MouseEvent) => {
         if (this.clicked) {
             this.clicked = false;
-            if (this.selectedTool === "rect") this.existingShapes.push({ type: "rect", x: this.startX, y: this.startY, height: e.clientY - this.startY, width: e.clientX - this.startX, fill: this.backgroundColor, stroke: this.strokeColor, fillStyle: this.fillStyle, sw: this.strokeWidth });
+            if (this.selectedTool === "rect") this.existingShapes.push({ type: "rect", x: this.startX, y: this.startY, height: e.clientY - this.startY, width: e.clientX - this.startX, fill: this.backgroundColor, stroke: this.strokeColor, fillStyle: this.fillStyle, sw: this.strokeWidth, });
             else if (this.selectedTool === "circle") {
                 const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
                 this.existingShapes.push({ type: "circle", centerX: this.startX, centerY: this.startY, radius: dm / 2, fill: this.backgroundColor, stroke: this.strokeColor, fillStyle: this.fillStyle, sw: this.strokeWidth })
