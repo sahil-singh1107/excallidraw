@@ -24,7 +24,23 @@ roomRouter.get("/rooms/:slug", async function (req: IGetUserAuthInfoRequest, res
     }
 })
 
+roomRouter.post("/create", authMiddleware, async function (req: IGetUserAuthInfoRequest, res) {
+    const userId = req.userId
+    const { slug } = req.body
 
+    try {
+        await prisma.room.create({
+            data: {
+                slug,
+                adminId: Number(userId)
+            }
+        })
+        res.status(200).send("Room created")
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+})
 
 roomRouter.get("/getRooms", authMiddleware, async function (req: IGetUserAuthInfoRequest, res) {
     const userId = req.userId
