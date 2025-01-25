@@ -7,7 +7,7 @@ export interface IGetUserAuthInfoRequest extends Request {
 
 const authMiddleware = (req : IGetUserAuthInfoRequest, res : Response, next : NextFunction) => {
     const token = req.headers.authorization;
-
+    console.log(token);
     if (!token) {
        res.status(401).json({ message: "Authorization header is missing or malformed" });
        return;
