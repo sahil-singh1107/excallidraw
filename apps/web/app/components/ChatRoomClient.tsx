@@ -15,13 +15,15 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawShape, setDrawShape] = useState<DrawShape>();
   const [backgroundColor, setBackgroundColor] = useState<string>("white");
+  const [strokeColor, setStrokeColor] = useState<string>("white")
   const [isPopoverOpen, setIsPopoverOpen] = useState(false); 
 
   useEffect(() => {
     drawShape?.setTool(selected);
     drawShape?.setBack(backgroundColor);
+    drawShape?.setStroke(strokeColor)
     setIsPopoverOpen(selected === "select"); 
-  }, [selected, drawShape, backgroundColor]);
+  }, [selected, drawShape, backgroundColor, strokeColor]);
 
   useEffect(() => {
     if (canvasRef.current && socket) {
@@ -45,7 +47,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
       />
       {
         isPopoverOpen && (
-          <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} />
+          <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} />
         )
       }
     </div>

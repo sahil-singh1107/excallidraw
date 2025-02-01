@@ -146,9 +146,11 @@ export class DrawShape {
         }
     }
 
-    getShape () {
-        console.log(this.shapeSelected);
-        return this.shapeSelected !== null
+    setStroke (color : string) {
+        if (this.shapeSelected && (this.shapeSelected.type === "rect" || this.shapeSelected.type === "circle")) {
+            this.shapeSelected.stroke = color
+            this.clearAndRedraw();
+        }
     }
 
     initHandlers() {
