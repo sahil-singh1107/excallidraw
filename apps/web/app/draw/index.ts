@@ -49,8 +49,7 @@ export class DrawShape {
     private canvas: HTMLCanvasElement
     private roughCanvas
     private existingShapes: Shape[]
-    private edges: { first: number, second: number }[]
-    private selectedShapeIndex: number
+    public shapeSelected : Shape
     private roomId: number
     private clicked: boolean
     private selectedTool: string
@@ -61,7 +60,6 @@ export class DrawShape {
     private startX: number
     private startY: number
     private draggedShape: Shape
-    private activeTooltip: HTMLDivElement | null = null;
     private path: { x: number, y: number }[]
     private points: [number, number][]
 
@@ -69,10 +67,9 @@ export class DrawShape {
 
     constructor(canvas: HTMLCanvasElement, roomId: number, selectedTool: string, socket: WebSocket) {
         this.canvas = canvas
+        this.shapeSelected = null
         this.roughCanvas = rough.canvas(canvas)
         this.existingShapes = []
-        this.edges = []
-        this.selectedShapeIndex = -1
         this.roomId = roomId
         this.clicked = false
         this.selectedTool = selectedTool
@@ -83,7 +80,6 @@ export class DrawShape {
         this.socket = socket
         this.startX = 0
         this.startY = 0
-
         this.path = []
         this.points = [[0, 0]]
         this.initHandlers();
@@ -143,20 +139,16 @@ export class DrawShape {
         if (tool) this.selectedTool = tool
     }
 
-    setStroke(color: string) {
-        if (color) this.strokeColor = color
-    }
-
     setBack(color: string) {
-        if (color) this.backgroundColor = color
+        if (this.shapeSelected && (this.shapeSelected.type === "rect" || this.shapeSelected.type === "circle")) {
+            this.shapeSelected.fill = color
+            this.clearAndRedraw();
+        }
     }
 
-    setFill(type: string) {
-        if (type) this.fillStyle = type
-    }
-
-    setStrokeWidth(w: number) {
-        this.strokeWidth = w
+    getShape () {
+        console.log(this.shapeSelected);
+        return this.shapeSelected !== null
     }
 
     initHandlers() {
@@ -175,84 +167,6 @@ export class DrawShape {
                 this.existingShapes = message.data
                 this.clearAndRedraw();
             }
-        }
-    }
-
-    showToolTip(shape: Shape) {
-        if (this.activeTooltip) {
-            this.removeTooltip();
-        }
-        const tooltip = document.createElement('div');
-        this.activeTooltip = tooltip
-        tooltip.className = 'absolute z-50 p-2 bg-black text-white rounded-full shadow-md flex items-center divide-x divide-gray-700';
-        tooltip.style.left = `${shape.x + 30}px`;
-        tooltip.style.top = `${shape.y + 30}px`;
-
-        function createColorSection(inputColor: string, onChange: (value: string) => void) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'relative w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center';
-
-            const colorPreview = document.createElement('div');
-            colorPreview.className = 'absolute w-8 h-8 rounded-full';
-            colorPreview.style.backgroundColor = inputColor;
-
-            const input = document.createElement('input');
-            input.type = 'color';
-            input.value = inputColor;
-            input.className = 'absolute inset-0 opacity-0 cursor-pointer';
-            input.addEventListener('input', (e) => {
-                const newColor = (e.target as HTMLInputElement).value;
-                colorPreview.style.backgroundColor = newColor;
-                onChange(newColor);
-            });
-
-            wrapper.appendChild(colorPreview);
-            wrapper.appendChild(input);
-            return wrapper;
-        }
-
-        const strokeColorSection = createColorSection(shape.stroke, (newColor) => {
-            shape.stroke = newColor;
-            this.clearAndRedraw();
-            this.updateShapes()
-        });
-
-        const fillColorSection = createColorSection(shape.fill || '#000000', (newColor) => {
-            shape.fill = newColor;
-            this.clearAndRedraw();
-            this.updateShapes();
-        });
-
-        const menuButton = document.createElement('button');
-        menuButton.className = 'w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white';
-        menuButton.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-6 h-6">
-        <path d="M3 12h18M3 6h18M3 18h18" />
-    </svg>
-`;
-
-
-        tooltip.appendChild(strokeColorSection);
-        tooltip.appendChild(fillColorSection);
-        tooltip.appendChild(menuButton);
-
-
-        document.body.appendChild(tooltip);
-
-
-    }
-
-    removeTooltip = () => {
-        if (this.activeTooltip) {
-            document.body.removeChild(this.activeTooltip);
-            this.activeTooltip = null;
-            document.removeEventListener('mousedown', this.handleClickOutside);
-        }
-    }
-
-    handleClickOutside = (event: MouseEvent) => {
-        if (this.activeTooltip && !this.activeTooltip.contains(event.target as Node)) {
-            this.removeTooltip();
         }
     }
 
@@ -288,18 +202,12 @@ export class DrawShape {
         })
     }
 
-    mouseDownHandler = (e: MouseEvent) => {
+    mouseDownHandler = (e: MouseEvent) => { 
         if (this.selectedTool === "select") {
-            this.existingShapes.map((shape, i) => {
+            this.existingShapes.map((shape) => {
                 if (!shape) return false;
-                if (this.selectedShapeIndex === -1) {
-                    this.selectedShapeIndex = i;
-                }
-                else {
-                    this.selectedShapeIndex = -1;
-                }
                 if (this.isPointInRect({ x: e.clientX, y: e.clientY }, shape) || this.isPointInCircle({ x: e.clientX, y: e.clientY }, shape) || this.isPointInLine({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPen({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
-                    this.showToolTip(shape);
+                    this.shapeSelected = shape;
                 }
             })
         }
@@ -481,7 +389,6 @@ export class DrawShape {
         this.canvas.addEventListener("mousedown", this.mouseDownHandler);
         this.canvas.addEventListener("mouseup", this.mouseUpHandler)
         this.canvas.addEventListener("mousemove", this.mouseMoveHandler);
-        this.canvas.addEventListener("click", this.handleClickOutside);
     }
 
     destroy() {
