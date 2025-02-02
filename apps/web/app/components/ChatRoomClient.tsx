@@ -46,7 +46,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
         ref={canvasRef}
         className="absolute top-0 left-0 z-20 no-scrollbar h-full w-full bg-black"
       />
-      <EmojiBar/>
+      <EmojiBar socket={socket} />
     </div>
   );
 };
