@@ -3,15 +3,17 @@ import { useSocket } from '../hooks/useSocket';
 import ChatRoomClient from './ChatRoomClient'
 
 const RoomCanvas = ({ id }: { id: number }) => {
+  console.log(id);
   const { socket, loading } = useSocket(id);
 
   if (loading) {
-    return <div>Loading...</div>; // Or a spinner/loading indicator
+    return <div>Loading...</div>;
   }
 
   if (!socket) {
-    return <div>Error connecting to the room.</div>; // Handle case where socket initialization fails
+    return <div>Error connecting to the room.</div>;
   }
+
   return (
     <>
       <ChatRoomClient id={id} socket={socket!} />

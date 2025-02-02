@@ -23,7 +23,7 @@ const ColorPicker = ({
     strokeColor: string, setStrokeColor: Dispatch<SetStateAction<string>>
 }) => {
     return (
-        <Accordion type="multiple" className="z-40 relative w-fit gap-2">
+        <Accordion type="multiple" className="z-40 relative w-fit gap-2 bottom-0">
             <AccordionItem value="item-1">
                 <AccordionTrigger className="text-white">Color</AccordionTrigger>
                 <AccordionContent className="flex gap-2 flex-wrap">

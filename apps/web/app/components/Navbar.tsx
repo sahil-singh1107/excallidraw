@@ -16,7 +16,7 @@ export interface Member {
     message: string
 }
 
-const Navbar = ({ socket }: { socket: WebSocket }) => {
+const Navbar = ({ socket, children }: { socket: WebSocket, children : React.ReactNode }) => {
 
     const [members, setMembers] = useState<Member[]>([]);
 
@@ -46,21 +46,22 @@ const Navbar = ({ socket }: { socket: WebSocket }) => {
                         <li key={i}>
                             <HoverCard>
                                 <HoverCardTrigger>
+                                    <>
                                     <Avatar>
                                         <AvatarImage />
                                         <AvatarFallback style={{ backgroundColor: member.color }}></AvatarFallback>
                                     </Avatar>
+                                    </>
                                 </HoverCardTrigger>
                                 <HoverCardContent className='text-center w-fit h-fit'>
                                     {member.username}
                                 </HoverCardContent>
                             </HoverCard>
-
-
                         </li>
                     ))}
                 </ul>
             </div>
+            {children}
         </div>
     );
 };

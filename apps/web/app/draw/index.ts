@@ -49,7 +49,7 @@ export class DrawShape {
     private canvas: HTMLCanvasElement
     private roughCanvas
     private existingShapes: Shape[]
-    public shapeSelected : Shape
+    public shapeSelected: Shape
     private roomId: number
     private clicked: boolean
     private selectedTool: string
@@ -73,9 +73,9 @@ export class DrawShape {
         this.roomId = roomId
         this.clicked = false
         this.selectedTool = selectedTool
-        this.backgroundColor = "red"
+        this.backgroundColor = "white"
         this.strokeWidth = 2
-        this.strokeColor = "red"
+        this.strokeColor = "white"
         this.fillStyle = "solid"
         this.socket = socket
         this.startX = 0
@@ -143,13 +143,15 @@ export class DrawShape {
         if (this.shapeSelected && (this.shapeSelected.type === "rect" || this.shapeSelected.type === "circle")) {
             this.shapeSelected.fill = color
             this.clearAndRedraw();
+            this.updateShapes();
         }
     }
 
-    setStroke (color : string) {
+    setStroke(color: string) {
         if (this.shapeSelected && (this.shapeSelected.type === "rect" || this.shapeSelected.type === "circle")) {
             this.shapeSelected.stroke = color
             this.clearAndRedraw();
+            this.updateShapes();
         }
     }
 
@@ -201,17 +203,30 @@ export class DrawShape {
                 }
             }
 
+            if (this.shapeSelected === shape) {
+                if (shape.type === "rect") {
+                    this.roughCanvas.rectangle(shape.x, shape.y, shape.width, shape.height, { stroke: "blue", strokeWidth: 1, strokeLineDash: [5, 5] });
+                }
+                if (shape.type === "circle") {
+                    this.roughCanvas.circle(shape.centerX, shape.centerY, shape.radius * 2, { stroke: "blue", strokeWidth: 1, strokeLineDash: [5, 5] })
+                }
+            }
         })
     }
 
-    mouseDownHandler = (e: MouseEvent) => { 
+    mouseDownHandler = (e: MouseEvent) => {
         if (this.selectedTool === "select") {
+            this.clicked = true
+            this.startX = e.clientX
+            this.startY = e.clientY
             this.existingShapes.map((shape) => {
                 if (!shape) return false;
                 if (this.isPointInRect({ x: e.clientX, y: e.clientY }, shape) || this.isPointInCircle({ x: e.clientX, y: e.clientY }, shape) || this.isPointInLine({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPen({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
                     this.shapeSelected = shape;
                 }
             })
+            console.log(this.shapeSelected);
+            this.clearAndRedraw();
         }
         else if (this.selectedTool === "grab") {
             this.clicked = true
@@ -308,6 +323,29 @@ export class DrawShape {
             }
             this.clearAndRedraw()
         }
+        else if (this.clicked && this.selectedTool === "select" && this.shapeSelected) {
+            const rect = this.canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            console.log(this.startX, this.startY, this.shapeSelected)
+            if (this.shapeSelected.type === "rect") {
+                const bottomRightX = this.shapeSelected.x + this.shapeSelected.width;
+                const bottomRightY = this.shapeSelected.y + this.shapeSelected.height;
+                const handleSize = 10;
+
+                if (
+                    Math.abs(currentX - bottomRightX) <= handleSize &&
+                    Math.abs(currentY - bottomRightY) <= handleSize
+                ) {
+                    const newWidth = Math.max(10, currentX - this.shapeSelected.x);
+                    const newHeight = Math.max(10, currentY - this.shapeSelected.y);
+                    this.shapeSelected.width = newWidth;
+                    this.shapeSelected.height = newHeight;
+                }
+
+                this.clearAndRedraw();
+            }
+        }
     }
 
     mouseUpHandler = (e: MouseEvent) => {
@@ -363,6 +401,26 @@ export class DrawShape {
                 this.updateShapes();
                 this.path = []
                 return;
+            }
+            else if (this.selectedTool === "select" && this.shapeSelected) {
+                if (this.shapeSelected.type === "rect") {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const currentX = e.clientX - rect.left;
+                    const currentY = e.clientY - rect.top;
+
+                    const bottomRightX = this.shapeSelected.x + this.shapeSelected.width;
+                    const bottomRightY = this.shapeSelected.y + this.shapeSelected.height;
+                    if (
+                        Math.abs(currentX - bottomRightX) <= 10 &&
+                        Math.abs(currentY - bottomRightY) <= 10
+                    ) {
+                        const newWidth = Math.max(10, currentX - this.shapeSelected.x);
+                        const newHeight = Math.max(10, currentY - this.shapeSelected.y);
+                        this.shapeSelected.width = newWidth;
+                        this.shapeSelected.height = newHeight;
+                        this.clearAndRedraw();
+                    }
+                }
             }
             else if (this.selectedTool === "grab") {
                 this.updateShapes();

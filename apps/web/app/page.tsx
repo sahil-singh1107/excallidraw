@@ -13,7 +13,10 @@ const AestheticRoomLanding = () => {
     const stroedToken = localStorage.getItem('token') as string;
     if (!stroedToken) router.push('/signin');
     setToken(stroedToken);
-    if (roomName) router.push(`/room/${roomName}`);
+  }, []);
+
+  useEffect(() => {
+    if (roomName && token) router.push(`/room/${roomName}?token=${encodeURIComponent(token)}`);
   }, [roomName]);
 
   return (

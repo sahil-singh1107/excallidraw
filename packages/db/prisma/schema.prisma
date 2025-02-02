@@ -9,9 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -34,9 +33,8 @@ model Room {
 }
 
 model Shape {
-  id     Int        @id @default(autoincrement())
+  id     Int  @id @default(autoincrement())
   roomId Int
-  room   Room       @relation(fields: [roomId], references: [id])
-  data Json
+  room   Room @relation(fields: [roomId], references: [id])
+  data   Json
 }
-

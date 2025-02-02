@@ -4,6 +4,7 @@ import Navbar from "./Navbar";
 import { DrawShape } from "../draw";
 import Sidebar from "./Sidebar";
 import ColorPicker from "./ColorPicker";
+import EmojiBar from "@/components/EmojiBar";
 
 interface ChatRoomClientProps {
   id: number;
@@ -16,13 +17,11 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   const [drawShape, setDrawShape] = useState<DrawShape>();
   const [backgroundColor, setBackgroundColor] = useState<string>("white");
   const [strokeColor, setStrokeColor] = useState<string>("white")
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false); 
 
   useEffect(() => {
     drawShape?.setTool(selected);
     drawShape?.setBack(backgroundColor);
     drawShape?.setStroke(strokeColor)
-    setIsPopoverOpen(selected === "select"); 
   }, [selected, drawShape, backgroundColor, strokeColor]);
 
   useEffect(() => {
@@ -39,17 +38,15 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
 
   return (
     <div className="relative">
-      <Navbar socket={socket} />
+      <Navbar socket={socket} >
+        <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} />
+      </Navbar>
       <Sidebar selected={selected} setSelected={setSelected} />
       <canvas
         ref={canvasRef}
         className="absolute top-0 left-0 z-20 no-scrollbar h-full w-full bg-black"
       />
-      {
-        isPopoverOpen && (
-          <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} />
-        )
-      }
+      <EmojiBar/>
     </div>
   );
 };

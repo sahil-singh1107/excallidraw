@@ -4,7 +4,7 @@ import { prisma } from "@repo/db/client";
 
 const roomRouter: Router = express.Router();
 
-roomRouter.get("/rooms/:slug", async function (req: IGetUserAuthInfoRequest, res) {
+roomRouter.get("/rooms/:slug", authMiddleware, async function (req: IGetUserAuthInfoRequest, res) {
     const slug = req.params.slug as string
     const userId = req.userId
     console.log(userId);
@@ -27,7 +27,6 @@ roomRouter.get("/rooms/:slug", async function (req: IGetUserAuthInfoRequest, res
 roomRouter.post("/create", authMiddleware, async function (req: IGetUserAuthInfoRequest, res) {
     const userId = req.userId
     const { slug } = req.body
-
     try {
         await prisma.room.create({
             data: {

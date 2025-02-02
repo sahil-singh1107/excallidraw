@@ -30,7 +30,7 @@ const Rooms = ({ token, setRoomName }: { token: string, setRoomName: Dispatch<Se
         if (typing.trim()) {
             try {
                 await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/room/create`,
-                    { name: typing },
+                    { slug: typing },
                     { headers: { Authorization: token } }
                 );
                 toast({
