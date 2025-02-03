@@ -40,8 +40,10 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
     }
   }, [id, socket]);
 
-  const handleMouseDown = (e) => {
-    if (selected!=="grab") return;
+  const handleMouseDown = (e: MouseEvent) => {
+    if (e.button !== 2) return;
+    e.preventDefault();
+
     setIsDragging(true);
     setDragStart({
       x: e.clientX - position.x,
@@ -49,8 +51,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
     });
   };
 
-  const handleMouseMove = (e) => {
-    if (selected!=="grab") return;
+  const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
 
     setPosition({
@@ -60,7 +61,6 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   };
 
   const handleMouseUp = () => {
-    if (selected!=="grab") return;
     setIsDragging(false);
   };
 

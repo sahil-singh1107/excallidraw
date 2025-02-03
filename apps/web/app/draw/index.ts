@@ -216,10 +216,11 @@ export class DrawShape {
 
     mouseDownHandler = (e: MouseEvent) => {
         console.log("from class",e.clientX, e.clientY);
+        const rect = this.canvas.getBoundingClientRect();
         if (this.selectedTool === "select") {
             this.clicked = true
-            this.startX = e.clientX
-            this.startY = e.clientY
+            this.startX = e.clientX - rect.left
+            this.startY = e.clientY - rect.top
             this.existingShapes.map((shape) => {
                 if (!shape) return false;
                 if (this.isPointInRect({ x: e.clientX, y: e.clientY }, shape) || this.isPointInCircle({ x: e.clientX, y: e.clientY }, shape) || this.isPointInLine({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPen({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
@@ -231,17 +232,16 @@ export class DrawShape {
         }
         else if (this.selectedTool === "grab") {
             this.clicked = true
-            this.startX = e.clientX
-            this.startY = e.clientY
+            this.startX = e.clientX - rect.left
+            this.startY = e.clientY - rect.top
             this.existingShapes.map((shape) => {
                 if (!shape) return false;
-                if (this.isPointInRect({ x: e.clientX, y: e.clientY }, shape) || this.isPointInCircle({ x: e.clientX, y: e.clientY }, shape) || this.isPointInLine({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPen({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
+                if (this.isPointInRect({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInCircle({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInLine({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPen({ x: e.clientX-rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
                     this.draggedShape = shape
                 }
             })
         }
         else {
-            const rect = this.canvas.getBoundingClientRect();
             this.clicked = true
             this.startX = e.clientX - rect.left
             this.startY = e.clientY - rect.top
@@ -253,17 +253,15 @@ export class DrawShape {
     mouseMoveHandler = (e: MouseEvent) => {
         if (this.clicked && this.selectedTool !== "grab") {
             this.clearAndRedraw();
+            const rect = this.canvas.getBoundingClientRect();
             if (this.selectedTool === "rect") {
-                const rect = this.canvas.getBoundingClientRect();
                 const width = e.clientX - this.startX - rect.left, height = e.clientY - this.startY - rect.top
-
                 this.roughCanvas.rectangle(this.startX, this.startY, width, height, { fill: this.backgroundColor, stroke: this.strokeColor, strokeWidth: this.strokeWidth, fillStyle: this.fillStyle });
             }
             else if (this.selectedTool === "circle") {
                 //const centerX = (e.clientX - this.startX) / 2, centerY = (e.clientY - this.startY) / 2;
-                const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
-
-                this.roughCanvas.circle(this.startX, this.startY, dm, { fill: this.backgroundColor, stroke: this.strokeColor, strokeWidth: this.strokeWidth, fillStyle: this.fillStyle });
+                const dm = Math.sqrt((e.clientX - this.startX - rect.left) * (e.clientX - this.startX - rect.top) + (e.clientY - this.startY - rect.top) * (e.clientY - this.startY) - rect.top);
+                this.roughCanvas.circle(this.startX  - rect.left, this.startY - rect.top, dm, { fill: this.backgroundColor, stroke: this.strokeColor, strokeWidth: this.strokeWidth, fillStyle: this.fillStyle });
             }
             else if (this.selectedTool === "line") {
                 const rect = this.canvas.getBoundingClientRect();
