@@ -14,7 +14,7 @@ export function useSocket(roomId: number) {
             return;
         }
 
-        const ws = new WebSocket(`ws://localhost:5000?token=${token}`);
+        const ws = new WebSocket(`ws://localhost:8080?token=${token}`);
 
         ws.onopen = () => {
             console.log("WebSocket connected.");

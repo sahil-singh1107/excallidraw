@@ -1,6 +1,6 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import jwt, { JwtPayload } from "jsonwebtoken"
-const wss = new WebSocketServer({ port: 5000 });
+const wss = new WebSocketServer({ port: 8080 });
 import { JWT_SECRET } from "@repo/backend-common/config"
 import { prisma } from "@repo/db/client"
 interface User {
@@ -150,33 +150,16 @@ wss.on('connection', async function connection(ws, request) {
       }
     }
 
-    // if (parsedData.type === "chat") {
-    //   const roomId = parsedData.roomId
-    //   const message = parsedData.message
-
-    //   for (let [k, v] of users) {
-    //     if (v.rooms.includes(roomId) && v.ws === ws) {
-    //       v.status = !v.status
-    //       v.message = message
-    //     }
-    //   }
-    //   const members: { username: string, color: string, x: number, y: number, status: boolean, message: string }[] = [];
-    //   for (let [k, v] of users) {
-    //     if (v.rooms.includes(parsedData.roomId)) {
-    //       const findUser = await prisma.user.findUnique({ where: { id: Number(v.userId) } });
-    //       members.push({ username: findUser!.username, color: v.color, x: v.x, y: v.y, status: v.status, message: v.message });
-    //     }
-    //   }
-    //   for (let [k, v] of users) {
-    //     if (v.rooms.includes(parsedData.roomId)) {
-    //       v.ws.send(JSON.stringify({
-    //         type: "user_updates",
-    //         members
-    //       }))
-    //     }
-    //   }
-    // }
-
+    if (parsedData.type === "emoji") {
+      for (let [k, v] of users) {
+        if (v.rooms.includes(parsedData.roomId)) {
+          v.ws.send(JSON.stringify({
+            type: "emoji",
+            data: parsedData.data
+          }))
+        }
+      }
+    }
 
   });
 
