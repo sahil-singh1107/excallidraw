@@ -17,6 +17,9 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
   const [drawShape, setDrawShape] = useState<DrawShape>();
   const [backgroundColor, setBackgroundColor] = useState<string>("white");
   const [strokeColor, setStrokeColor] = useState<string>("white")
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     drawShape?.setTool(selected);
@@ -26,8 +29,9 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
 
   useEffect(() => {
     if (canvasRef.current && socket) {
-      canvasRef.current.width = window.innerWidth;
-      canvasRef.current.height = window.innerHeight;
+      // canvasRef.current.width = window.innerWidth;
+      // canvasRef.current.height = window.innerHeight;
+
       const s = new DrawShape(canvasRef.current, id, selected, socket);
       setDrawShape(s);
       return () => {
@@ -36,18 +40,55 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
     }
   }, [id, socket]);
 
+  const handleMouseDown = (e) => {
+    if (selected!=="grab") return;
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (selected!=="grab") return;
+    if (!isDragging) return;
+
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    if (selected!=="grab") return;
+    setIsDragging(false);
+  };
+
   return (
-    <div className="relative">
-      <Navbar socket={socket} >
-        <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} />
-      </Navbar>
-      <Sidebar selected={selected} setSelected={setSelected} />
-      <canvas
-        ref={canvasRef}
-        className="absolute top-0 left-0 z-20 no-scrollbar h-full w-full bg-black"
-      />
-      <EmojiBar socket={socket} id={id} />
-    </div>
+      <>
+        <Navbar socket={socket} >
+          <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} />
+        </Navbar>
+        <Sidebar selected={selected} setSelected={setSelected} />
+        <canvas
+            onClick={(e) => {
+              console.log("from canvas",e.clientX,e.clientY);
+            }}
+            ref={canvasRef}
+            width={window.innerWidth*5}
+            height={window.innerHeight*5}
+            className="absolute top-0 left-0 no-scrollbar bg-black"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px)`,
+              transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+            }}
+        />
+        <EmojiBar socket={socket} id={id} />
+      </>
   );
 };
 

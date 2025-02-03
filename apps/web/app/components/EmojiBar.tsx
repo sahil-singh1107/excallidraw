@@ -18,13 +18,16 @@ const AnimatedReactionsBar = ({ socket, id }: { socket: WebSocket, id : number }
 
     useEffect(() => {
         emojiClass?.setEmoji(pressed);
-        emojiClass?.displayEmoji();
+        emojiClass?.sendEmoji();
         setPressed("");
     }, [pressed]);
 
     useEffect(() => {
         const e = new Emoji(id, socket, "");
         setEmojiClass(e);
+        return () => {
+            emojiClass?.destroy();
+        }
     }, []);
     
     return (
