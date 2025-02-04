@@ -1,4 +1,7 @@
 import rough from "roughjs"
+import {useEncrypt} from "@/hooks/useEncrypt";
+
+const {encrypt, decryptSymmetric} = useEncrypt();
 
 type Shape = {
     type: "rect";
@@ -59,15 +62,17 @@ export class DrawShape {
     private fillStyle: string
     private startX: number
     private startY: number
+    private key : string
     private draggedShape: Shape
     private path: { x: number, y: number }[]
     private points: [number, number][]
 
     socket: WebSocket
 
-    constructor(canvas: HTMLCanvasElement, roomId: number, selectedTool: string, socket: WebSocket) {
+    constructor(canvas: HTMLCanvasElement, roomId: number, selectedTool: string, socket: WebSocket, key : string) {
         this.canvas = canvas
         this.shapeSelected = null
+        this.key = key
         this.roughCanvas = rough.canvas(canvas)
         this.existingShapes = []
         this.roomId = roomId
@@ -159,16 +164,18 @@ export class DrawShape {
         this.socket.onmessage = (e) => {
             const message = JSON.parse(e.data);
 
+            console.log(message);
             if (message.type === "shape") {
-                const exists = this.existingShapes.some(shape => JSON.stringify(shape) === JSON.stringify(message.data));
+                const plainText = decryptSymmetric(message.data.ciphertext, message.data.iv, message.data.tag, message.data.key);
+                const exists = this.existingShapes.some(shape => JSON.stringify(shape) === JSON.stringify(plainText));
                 if (!exists) {
-                    this.existingShapes.push(message.data);
-                    this.clearAndRedraw();
-                }
+                            this.existingShapes.push(message.data);
+                             this.clearAndRedraw();
+                         }
             }
-
             if (message.type === "update_shapes") {
-                this.existingShapes = message.data
+                const plainText = decryptSymmetric(message.data.ciphertext, message.data.iv, message.data.tag, message.data.key);
+                console.log(plainText);
                 this.clearAndRedraw();
             }
         }
@@ -260,8 +267,8 @@ export class DrawShape {
             }
             else if (this.selectedTool === "circle") {
                 //const centerX = (e.clientX - this.startX) / 2, centerY = (e.clientY - this.startY) / 2;
-                const dm = Math.sqrt((e.clientX - this.startX - rect.left) * (e.clientX - this.startX - rect.top) + (e.clientY - this.startY - rect.top) * (e.clientY - this.startY) - rect.top);
-                this.roughCanvas.circle(this.startX  - rect.left, this.startY - rect.top, dm, { fill: this.backgroundColor, stroke: this.strokeColor, strokeWidth: this.strokeWidth, fillStyle: this.fillStyle });
+                const dm = Math.sqrt((e.clientX - this.startX - rect.left) * (e.clientX - this.startX - rect.left) + (e.clientY - this.startY - rect.top) * (e.clientY - this.startY) - rect.top);
+                this.roughCanvas.circle(this.startX , this.startY, dm, { fill: this.backgroundColor, stroke: this.strokeColor, strokeWidth: this.strokeWidth, fillStyle: this.fillStyle });
             }
             else if (this.selectedTool === "line") {
                 const rect = this.canvas.getBoundingClientRect();
@@ -355,7 +362,7 @@ export class DrawShape {
             const rect = this.canvas.getBoundingClientRect();
             if (this.selectedTool === "rect") this.existingShapes.push({ type: "rect", x: this.startX , y: this.startY, height: e.clientY - this.startY - rect.top, width: e.clientX - this.startX - rect.left, fill: this.backgroundColor, stroke: this.strokeColor, fillStyle: this.fillStyle, sw: this.strokeWidth, });
             else if (this.selectedTool === "circle") {
-                const dm = Math.sqrt((e.clientX - this.startX) * (e.clientX - this.startX) + (e.clientY - this.startY) * (e.clientY - this.startY));
+                const dm = Math.sqrt((e.clientX - this.startX - rect.left) * (e.clientX - this.startX - rect.left) + (e.clientY - this.startY - rect.top) * (e.clientY - this.startY - rect.top));
                 this.existingShapes.push({ type: "circle", centerX: this.startX, centerY: this.startY, radius: dm / 2, fill: this.backgroundColor, stroke: this.strokeColor, fillStyle: this.fillStyle, sw: this.strokeWidth })
             }
             else if (this.selectedTool === "line") {
@@ -430,20 +437,31 @@ export class DrawShape {
             }
             this.path = [];
             this.points = [];
+            const {tag, iv, ciphertext} = encrypt(JSON.stringify(this.existingShapes.slice(-1)[0]), this.key);
             this.socket.send(JSON.stringify({
                 type: "shape",
-                data: this.existingShapes.slice(-1)[0],
+                data: {
+                    tag,
+                    iv,
+                    ciphertext,
+                    key : this.key
+                },
                 roomId: this.roomId
             }))
-
         }
     }
 
     updateShapes() {
+        const {tag, iv, ciphertext} = encrypt(JSON.stringify(this.existingShapes), this.key);
         this.socket.send(JSON.stringify({
             type: "update_shapes",
             roomId: this.roomId,
-            data: this.existingShapes
+            data: {
+                tag,
+                iv,
+                ciphertext,
+                key : this.key
+            }
         }))
     }
 

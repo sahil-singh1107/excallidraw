@@ -9,9 +9,10 @@ import EmojiBar from "@/components/EmojiBar";
 interface ChatRoomClientProps {
   id: number;
   socket: WebSocket;
+  encryptionKey : string
 }
 
-const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
+const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket, encryptionKey }) => {
   const [selected, setSelected] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawShape, setDrawShape] = useState<DrawShape>();
@@ -29,10 +30,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket }) => {
 
   useEffect(() => {
     if (canvasRef.current && socket) {
-      // canvasRef.current.width = window.innerWidth;
-      // canvasRef.current.height = window.innerHeight;
-
-      const s = new DrawShape(canvasRef.current, id, selected, socket);
+      const s = new DrawShape(canvasRef.current, id, selected, socket, encryptionKey);
       setDrawShape(s);
       return () => {
         s.destroy();
