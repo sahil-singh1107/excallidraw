@@ -32,7 +32,7 @@ const AnimatedReactionsBar = ({ socket, id }: { socket: WebSocket, id : number }
     
     return (
         <>
-            <div className="flex items-center space-x-4 p-4 bg-transparent rounded-lg shadow-sm z-40 sticky w-fit">
+            <div className="flex items-center space-x-4 p-4 bg-transparent rounded-lg shadow-sm z-40 fixed top-0 left-[600px] w-fit">
                 {reactions.map(({ name, icon : Icon }, i) => (
                     <button
                         key={i}

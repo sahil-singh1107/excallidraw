@@ -39,9 +39,8 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket, encryptionK
   }, [id, socket]);
 
   const handleMouseDown = (e: MouseEvent) => {
-    if (e.button !== 2) return;
+    if (e.button !== 2 || selected!=="grab") return;
     e.preventDefault();
-
     setIsDragging(true);
     setDragStart({
       x: e.clientX - position.x,
@@ -68,24 +67,20 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket, encryptionK
           <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} />
         </Navbar>
         <Sidebar selected={selected} setSelected={setSelected} />
+        <EmojiBar socket={socket} id={id} />
         <canvas
-            onClick={(e) => {
-              console.log("from canvas",e.clientX,e.clientY);
-            }}
-            ref={canvasRef}
-            width={window.innerWidth*5}
-            height={window.innerHeight*5}
-            className="absolute top-0 left-0 no-scrollbar bg-black"
+            onContextMenu={(e) => e.preventDefault()}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            width={window.innerWidth*5}
+            height={window.innerHeight*5}
+            ref={canvasRef}
+            className={`canvas bg-black left-1./2 top-1/2 relative ${selected === "grab" && "cursor-grab"}`}
             style={{
-              transform: `translate(${position.x}px, ${position.y}px)`,
-              transition: isDragging ? 'none' : 'transform 0.1s ease-out'
-            }}
-        />
-        <EmojiBar socket={socket} id={id} />
+              transform: `translate(${position.x}px, ${position.y}px)`
+            }} />
       </>
   );
 };

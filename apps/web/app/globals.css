@@ -112,6 +112,11 @@
     display: none;
   }
 
+  .canvas {
+    background-image: radial-gradient(circle at 1px 1px, #3d3636 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+
   .no-scrollbar {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */

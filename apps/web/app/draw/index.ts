@@ -89,8 +89,15 @@ export class DrawShape {
         this.points = [[0, 0]]
         this.initHandlers();
         this.initMouseHandler();
+        //this.getShapes()
     }
 
+    // getShapes () {
+    //     const shapes = localStorage.getItem("shapes");
+    //     if (shapes) {
+    //         this.existingShapes = JSON.parse(shapes);
+    //     }
+    // }
 
     isPointInRect(point: { x: number; y: number }, rect: Shape): boolean {
         if (rect.type !== "rect") return false;
@@ -164,18 +171,19 @@ export class DrawShape {
         this.socket.onmessage = (e) => {
             const message = JSON.parse(e.data);
 
-            console.log(message);
             if (message.type === "shape") {
                 const plainText = decryptSymmetric(message.data.ciphertext, message.data.iv, message.data.tag, message.data.key);
                 const exists = this.existingShapes.some(shape => JSON.stringify(shape) === JSON.stringify(plainText));
                 if (!exists) {
                             this.existingShapes.push(message.data);
+
                              this.clearAndRedraw();
                          }
             }
             if (message.type === "update_shapes") {
                 const plainText = decryptSymmetric(message.data.ciphertext, message.data.iv, message.data.tag, message.data.key);
-                console.log(plainText);
+                this.existingShapes = plainText
+
                 this.clearAndRedraw();
             }
         }
@@ -453,6 +461,7 @@ export class DrawShape {
 
     updateShapes() {
         const {tag, iv, ciphertext} = encrypt(JSON.stringify(this.existingShapes), this.key);
+
         this.socket.send(JSON.stringify({
             type: "update_shapes",
             roomId: this.roomId,
@@ -472,6 +481,7 @@ export class DrawShape {
     }
 
     destroy() {
+
         this.canvas.removeEventListener("mousedown", this.mouseDownHandler)
         this.canvas.removeEventListener("mouseup", this.mouseUpHandler)
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler)
