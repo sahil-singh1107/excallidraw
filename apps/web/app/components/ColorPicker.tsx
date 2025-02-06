@@ -1,58 +1,67 @@
-import React, { Dispatch, SetStateAction } from 'react';
-
+import React, {Dispatch, SetStateAction, useEffect, useState} from 'react';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {Palette} from "lucide-react";
 const colors = [
     "#ffffff", "#1e1e1e", "#0c8599", "#9c36b5", "#c2255c", "#2f9e44", "#e03131"
 ];
 
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input"
+
 
 const ColorPicker = ({
     backgroundColor,
     setBackgroundColor,
     strokeColor,
-    setStrokeColor
+    setStrokeColor,
+    clicked,
+                         colorPickerPosition
 }: {
     backgroundColor: string;
     setBackgroundColor: Dispatch<SetStateAction<string>>;
     strokeColor: string, setStrokeColor: Dispatch<SetStateAction<string>>
+    clicked : boolean
+    colorPickerPosition : {x : number, y : number}
 }) => {
+
     return (
-        <Accordion type="multiple" className="z-40 relative w-fit gap-2 bottom-0">
-            <AccordionItem value="item-1">
-                <AccordionTrigger className="text-white">Color</AccordionTrigger>
-                <AccordionContent className="flex gap-2 flex-wrap">
-                    {colors.map((color, i) => (
-                        <Avatar
-                            key={i}
-                            className="w-10 h-10 cursor-pointer"
-                            onClick={() => setBackgroundColor(color)}
-                        >
-                            <AvatarFallback style={{ backgroundColor: color }}> </AvatarFallback>
-                        </Avatar>
-                    ))}
-                </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
-                <AccordionTrigger className="text-white">Stroke</AccordionTrigger>
-                <AccordionContent className='flex gap-2 flex-wrap'>
-                    {colors.map((color, i) => (
-                        <Avatar
-                            key={i}
-                            className="w-10 h-10 cursor-pointer"
-                            onClick={() => setStrokeColor(color)}
-                        >
-                            <AvatarFallback style={{ backgroundColor: color }}> </AvatarFallback>
-                        </Avatar>
-                    ))}
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
+
+        <Collapsible className={`z-40 transition duration-150`}>
+            <CollapsibleTrigger><Palette color="white"/></CollapsibleTrigger>
+            <CollapsibleContent>
+                <section>
+                    <span className="text-white">Background Color</span>
+                    <div className="flex gap-2">
+                        {
+                            colors.map((color,i) => (
+                                <div key={i} onClick={() => {
+                                    setBackgroundColor(color)
+                                }} className="rounded-full w-8 h-8 hover:scale-105 hover:cursor-pointer transition duration-150" style={{backgroundColor : color}} >
+
+                                </div>
+                            ))
+                        }
+                    </div>
+                </section>
+                <section>
+                    <span className="text-white">Stroke</span>
+                    <div className="flex gap-2">
+                        {
+                            colors.map((color, i) => (
+                                <div key={i} onClick={() => {
+                                    setStrokeColor(color)
+                                }} className="rounded-full w-8 h-8 hover:scale-105 hover:cursor-pointer transition duration-150" style={{backgroundColor: color}}>
+                                </div>
+                            ))
+                        }
+                    </div>
+                </section>
+            </CollapsibleContent>
+        </Collapsible>
+
     );
 };
 

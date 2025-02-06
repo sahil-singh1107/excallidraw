@@ -7,7 +7,6 @@ export function useEncrypt() {
         if (keyBuffer.length !== 32) {
             throw new Error("Key must be a 32-byte Base64-encoded string.");
         }
-
         const iv = crypto.randomBytes(12); // IV should remain as raw bytes
         const cipher = crypto.createCipheriv("aes-256-gcm", keyBuffer, iv);
 
@@ -16,7 +15,6 @@ export function useEncrypt() {
             cipher.final(),
         ]);
         const tag = cipher.getAuthTag();
-
         return {
             ciphertext: encryptedBuffer.toString("base64"),
             iv: iv.toString("base64"),

@@ -7,4 +7,4 @@ app.use(express.json());
 
 app.use("/api/v1", mainRouter)
 
-app.listen(3001, () => {console.log("listening on port", 3001)});
+app.listen(5000, () => {console.log("listening on port", 5000)});

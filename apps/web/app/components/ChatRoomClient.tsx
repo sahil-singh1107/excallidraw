@@ -21,6 +21,9 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket, encryptionK
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [colorPickerPosition, setColorPickerPosition] = useState<{x : number, y : number}>({x : 0, y : 0});
+  const [clicked, setClicked] = useState<boolean>(false)
+
 
   useEffect(() => {
     drawShape?.setTool(selected);
@@ -39,6 +42,12 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket, encryptionK
   }, [id, socket]);
 
   const handleMouseDown = (e: MouseEvent) => {
+    if (selected==="select") {
+      setClicked(true);
+      setColorPickerPosition({x : e.clientX, y : e.clientY});
+      console.log(clicked, colorPickerPosition);
+      return;
+    }
     if (e.button !== 2 || selected!=="grab") return;
     e.preventDefault();
     setIsDragging(true);
@@ -63,9 +72,9 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket, encryptionK
 
   return (
       <>
-        <Navbar socket={socket} >
-          <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} />
-        </Navbar>
+        <Navbar socket={socket} />
+        { clicked && <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} clicked={clicked} colorPickerPosition={colorPickerPosition} /> }
+
         <Sidebar selected={selected} setSelected={setSelected} />
         <EmojiBar socket={socket} id={id} />
         <canvas

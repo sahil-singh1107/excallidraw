@@ -238,7 +238,7 @@ export class DrawShape {
             this.startY = e.clientY - rect.top
             this.existingShapes.map((shape) => {
                 if (!shape) return false;
-                if (this.isPointInRect({ x: e.clientX, y: e.clientY }, shape) || this.isPointInCircle({ x: e.clientX, y: e.clientY }, shape) || this.isPointInLine({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPen({ x: e.clientX, y: e.clientY }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
+                if (this.isPointInRect({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInCircle({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInLine({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPen({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPolygon({ x: e.clientX-rect.left, y: e.clientY-rect.top }, shape)) {
                     this.shapeSelected = shape;
                 }
             })
@@ -275,17 +275,16 @@ export class DrawShape {
             }
             else if (this.selectedTool === "circle") {
                 //const centerX = (e.clientX - this.startX) / 2, centerY = (e.clientY - this.startY) / 2;
-                const dm = Math.sqrt((e.clientX - this.startX - rect.left) * (e.clientX - this.startX - rect.left) + (e.clientY - this.startY - rect.top) * (e.clientY - this.startY) - rect.top);
+                const dm = Math.sqrt((e.clientX - this.startX - rect.left) * (e.clientX - this.startX - rect.left) + (e.clientY - this.startY - rect.top) * (e.clientY - this.startY - rect.top));
                 this.roughCanvas.circle(this.startX , this.startY, dm, { fill: this.backgroundColor, stroke: this.strokeColor, strokeWidth: this.strokeWidth, fillStyle: this.fillStyle });
             }
             else if (this.selectedTool === "line") {
                 const rect = this.canvas.getBoundingClientRect();
-                const startX = this.startX - rect.left;
-                const startY = this.startY - rect.top;
+                const startX = this.startX ;
+                const startY = this.startY ;
                 const currentX = e.clientX - rect.left;
                 const currentY = e.clientY - rect.top;
-
-                this.roughCanvas.line(startX, startY, currentX, currentY, { strokeWidth: this.strokeWidth, stroke: "red" });
+                this.roughCanvas.line(startX, startY, currentX, currentY, { strokeWidth: this.strokeWidth, stroke: this.strokeColor });
             }
             else if (this.selectedTool === "pen") {
                 const rect = this.canvas.getBoundingClientRect();

@@ -16,7 +16,7 @@ export interface Member {
     message: string
 }
 
-const Navbar = ({ socket, children }: { socket: WebSocket, children : React.ReactNode }) => {
+const Navbar = ({ socket }: { socket: WebSocket }) => {
 
     const [members, setMembers] = useState<Member[]>([]);
 
@@ -61,7 +61,6 @@ const Navbar = ({ socket, children }: { socket: WebSocket, children : React.Reac
                     ))}
                 </ul>
             </div>
-            {children}
         </div>
     );
 };
