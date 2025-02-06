@@ -48,10 +48,17 @@ type Shape = {
     content: string
 }
 
+type Edge = {
+    type : number
+    shape1 : Shape
+    shape2 : Shape
+}
+
 export class DrawShape {
     private canvas: HTMLCanvasElement
     private roughCanvas
     private existingShapes: Shape[]
+    private existingEdges : Edge[]
     public shapeSelected: Shape
     private roomId: number
     private clicked: boolean
@@ -63,7 +70,7 @@ export class DrawShape {
     private startX: number
     private startY: number
     private key : string
-    private draggedShape: Shape
+    private draggedShape: Shape | null
     private path: { x: number, y: number }[]
     private points: [number, number][]
 
@@ -75,6 +82,7 @@ export class DrawShape {
         this.key = key
         this.roughCanvas = rough.canvas(canvas)
         this.existingShapes = []
+        this.existingEdges = []
         this.roomId = roomId
         this.clicked = false
         this.selectedTool = selectedTool
@@ -89,6 +97,7 @@ export class DrawShape {
         this.points = [[0, 0]]
         this.initHandlers();
         this.initMouseHandler();
+        this.clearAndRedraw()
         //this.getShapes()
     }
 
@@ -227,6 +236,15 @@ export class DrawShape {
                 }
             }
         })
+        this.existingEdges.map((edge) => {
+            if (edge.type === 1) {
+                if (edge.shape1.type==="rect" && edge.shape2.type==="rect") {
+                    const x1 = edge.shape1.x + edge.shape1.width, y1 = edge.shape1.y + edge.shape1.height / 2
+                    const  x2 = edge.shape2.x + edge.shape2.width/2, y2 = edge.shape2.y
+                    this.roughCanvas.line(x1, y1, x2, y2, { stroke: "grey", strokeWidth: 1, strokeLineDash: [1, 6, 6,] })
+                }
+            }
+        })
     }
 
     mouseDownHandler = (e: MouseEvent) => {
@@ -242,7 +260,7 @@ export class DrawShape {
                     this.shapeSelected = shape;
                 }
             })
-            console.log(this.shapeSelected);
+
             this.clearAndRedraw();
         }
         else if (this.selectedTool === "grab") {
@@ -342,7 +360,6 @@ export class DrawShape {
             const rect = this.canvas.getBoundingClientRect();
             const currentX = e.clientX - rect.left;
             const currentY = e.clientY - rect.top;
-            console.log(this.startX, this.startY, this.shapeSelected)
             if (this.shapeSelected.type === "rect") {
                 const bottomRightX = this.shapeSelected.x + this.shapeSelected.width;
                 const bottomRightY = this.shapeSelected.y + this.shapeSelected.height;
@@ -360,6 +377,7 @@ export class DrawShape {
 
                 this.clearAndRedraw();
             }
+
         }
     }
 
@@ -437,6 +455,18 @@ export class DrawShape {
                         this.clearAndRedraw();
                     }
                 }
+                let shape2 : Shape
+                this.existingShapes.map((shape) => {
+                    if (!shape) return false;
+                    if (this.isPointInRect({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInCircle({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInLine({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPen({ x: e.clientX-rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
+                        shape2 = shape
+                    }
+                })
+                if (shape2) {
+                    this.existingEdges.push({type : 1, shape1 : this.shapeSelected, shape2 : shape2});
+                    this.clearAndRedraw();
+                }
+
             }
             else if (this.selectedTool === "grab") {
                 this.updateShapes();

@@ -73,7 +73,7 @@ const ChatRoomClient: React.FC<ChatRoomClientProps> = ({ id, socket, encryptionK
   return (
       <>
         <Navbar socket={socket} />
-        { clicked && <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} clicked={clicked} colorPickerPosition={colorPickerPosition} /> }
+        { clicked && <ColorPicker backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} strokeColor={strokeColor} setStrokeColor={setStrokeColor} colorPickerPosition={colorPickerPosition} /> }
 
         <Sidebar selected={selected} setSelected={setSelected} />
         <EmojiBar socket={socket} id={id} />

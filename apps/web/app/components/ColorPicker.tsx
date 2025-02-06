@@ -16,20 +16,15 @@ const ColorPicker = ({
     backgroundColor,
     setBackgroundColor,
     strokeColor,
-    setStrokeColor,
-    clicked,
-                         colorPickerPosition
+    setStrokeColor, colorPickerPosition
 }: {
     backgroundColor: string;
     setBackgroundColor: Dispatch<SetStateAction<string>>;
     strokeColor: string, setStrokeColor: Dispatch<SetStateAction<string>>
-    clicked : boolean
     colorPickerPosition : {x : number, y : number}
 }) => {
-
     return (
-
-        <Collapsible className={`z-40 transition duration-150`}>
+        <Collapsible className="fixed z-40" style={{left : `${colorPickerPosition.x}px`, top : `${colorPickerPosition.y - 100}px`}}>
             <CollapsibleTrigger><Palette color="white"/></CollapsibleTrigger>
             <CollapsibleContent>
                 <section>
