@@ -11,10 +11,15 @@ import { UserSchema } from "@repo/common/config"
 import { z } from "zod"
 import axios from 'axios';
 import { useRouter } from 'next/navigation'
+import GoogleLoginButton from "@/components/GoogleLogin";
+
+
 const Page = () => {
 
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const [user, setUser] = useState();
 
     const form = useForm<z.infer<typeof UserSchema>>({
         resolver: zodResolver(UserSchema),
@@ -60,6 +65,7 @@ const Page = () => {
                     <span className='text-white text-xl'>Sign Up Account</span>
                     <span className='text-[#555555]'>Enter your personal details to create your account</span>
                 </div>
+                <GoogleLoginButton />
                 <form className='flex flex-col space-y-6 mt-16' onSubmit={form.handleSubmit(onSubmit)}>
                     <div className='flex space-x-3 items-center'>
                         <div className='flex flex-col space-y-1 text-[#808081] hover:text-white duration-200 hover:-translate-y-1 relative '>

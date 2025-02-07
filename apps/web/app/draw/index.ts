@@ -257,16 +257,17 @@ export class DrawShape {
             this.drawArrow(edge);
         })
         this.connections.map((connection) => {
-            if (this.existingShapes[connection.s].type==="rect" && this.existingShapes[connection.e].type==="rect") {
+            if (!this.existingShapes || !this.existingShapes[connection.s] || !this.existingShapes[connection.e]) return;
+            if (this.existingShapes[connection.s]?.type==="rect" && this.existingShapes[connection.e]?.type==="rect") {
                 this.drawArrow({x1 : this.findCenter(this.existingShapes[connection.s])?.c1, y1 : this.findCenter(this.existingShapes[connection.s])?.c2, x2 : this.findCenter(this.existingShapes[connection.e])?.c1, y2 :  this.findCenter(this.existingShapes[connection.e])?.c2});
             }
-            if (this.existingShapes[connection.s].type==="rect" && this.existingShapes[connection.e].type==="circle") {
+            if (this.existingShapes[connection.s]?.type==="rect" && this.existingShapes[connection.e]?.type==="circle") {
                 this.drawArrow({x1 : this.findCenter(this.existingShapes[connection.s])?.c1, y1 : this.findCenter(this.existingShapes[connection.s])?.c2, x2 :this.existingShapes[connection.e].centerX , y2 :  this.existingShapes[connection.e].centerY});
             }
-            if (this.existingShapes[connection.s].type==="circle" && this.existingShapes[connection.e].type==="rect") {
+            if (this.existingShapes[connection.s]?.type==="circle" && this.existingShapes[connection.e]?.type==="rect") {
                 this.drawArrow({x1 : this.existingShapes[connection.s].centerX, y1 : this.existingShapes[connection.s].centerY, x2 : this.findCenter(this.existingShapes[connection.e])?.c1, y2 :  this.findCenter(this.existingShapes[connection.e])?.c2});
             }
-            if (this.existingShapes[connection.s].type==="circle" && this.existingShapes[connection.e].type==="circle") {
+            if (this.existingShapes[connection.s]?.type==="circle" && this.existingShapes[connection.e]?.type==="circle") {
                 this.drawArrow({x1 : this.existingShapes[connection.s].centerX, y1 : this.existingShapes[connection.s].centerY, x2 : this.existingShapes[connection.e].centerX, y2 :  this.existingShapes[connection.e].centerY});
             }
         })

@@ -9,6 +9,7 @@ import { SiginSchema } from "@repo/common/config"
 import { z } from "zod"
 import { useRouter } from 'next/navigation'
 import axios from 'axios';
+import GoogleLoginButton from "@/components/GoogleLogin";
 
 const Page = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -51,6 +52,7 @@ const Page = () => {
         <div className='flex flex-col items-center space-y-2'>
           <span className='text-white text-xl'>Log in to your Account</span>
         </div>
+        <GoogleLoginButton/>
         <form className='flex flex-col space-y-6 mt-16 w-[80%]' onSubmit={form.handleSubmit(onSubmit)}>
           <div className='flex flex-col space-y-1 text-[#808081] hover:text-white duration-200 hover:-translate-y-1'>
             <label htmlFor='email' className='text-xs'>Email</label>

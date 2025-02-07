@@ -7,6 +7,6 @@ const mainRouter : Router = express.Router();
 
 mainRouter.use('/user', userRouter);
 mainRouter.use("/chat", chatRouter);
-mainRouter.use("/room", roomRouter)
+mainRouter.use("/room", roomRouter);
 
 export default mainRouter

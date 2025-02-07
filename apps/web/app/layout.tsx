@@ -20,11 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.className} tracking-wider`}>
-          
-          <main>
-            
-            {children}
-          </main>
+
+              {children}
+
       </body>
     </html>
   );

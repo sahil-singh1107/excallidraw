@@ -11,6 +11,7 @@ export default  {
   ],
   theme: {
   	extend: {
+
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
@@ -69,6 +70,17 @@ export default  {
   			}
   		},
   		keyframes: {
+			  tilt : {
+				"0% 50% 100%" : {
+					transform: "rotate(0deg)"
+				},
+				  "25%" : {
+					transform: "rotate(1deg)"
+				  },
+				  "75%" : {
+					transform : "rotate(-1deg)"
+				  }
+			  },
   			'accordion-down': {
   				from: {
   					height: '0'
@@ -87,6 +99,7 @@ export default  {
   			}
   		},
   		animation: {
+			  tilt : "tilt 10s infinite linear",
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		}

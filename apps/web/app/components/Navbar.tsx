@@ -19,6 +19,14 @@ export interface Member {
 const Navbar = ({ socket }: { socket: WebSocket }) => {
 
     const [members, setMembers] = useState<Member[]>([]);
+    const [photoUrl, setPhotoUrl] = useState<string | undefined>("");
+
+    useEffect(() => {
+        const picture = localStorage.getItem("photourl");
+        if (picture) {
+            setPhotoUrl(picture)
+        }
+    },[])
 
 
     useEffect(() => {
@@ -48,7 +56,7 @@ const Navbar = ({ socket }: { socket: WebSocket }) => {
                                 <HoverCardTrigger>
                                     <>
                                     <Avatar>
-                                        <AvatarImage />
+                                        <AvatarImage src={photoUrl} />
                                         <AvatarFallback style={{ backgroundColor: member.color }}></AvatarFallback>
                                     </Avatar>
                                     </>
