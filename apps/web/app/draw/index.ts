@@ -60,7 +60,6 @@ export class DrawShape {
     private roughCanvas
     private existingShapes: Shape[]
     private existingEdges : Edge[]
-    private shapeIndexEdge : Map<number,number>
     public shapeSelected: Shape
     private shapeSelectedIndex : number
     private roomId: number
@@ -77,13 +76,14 @@ export class DrawShape {
     private edgeShape : number
     private draggedShape: Shape | null
     private draggedShapeIndex : number
+    private connections : [{s : number, e : number}]
     private path: { x: number, y: number }[]
     private points: [number, number][]
 
     socket: WebSocket
 
     constructor(canvas: HTMLCanvasElement, roomId: number, selectedTool: string, socket: WebSocket, key : string) {
-        this.shapeIndexEdge = new Map<number,number>
+        this.connections = []
         this.edgeIndex = -1
         this.edgeShape = -1
         this.canvas = canvas
@@ -208,6 +208,13 @@ export class DrawShape {
         }
     }
 
+    drawArrow (edge : Edge) {
+        const {x1,y1,x2,y2} = edge
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        this.roughCanvas.line(x1,y1,x2,y2,{strokeWidth : 2, strokeLineDash : [1,6,6], stroke : "orange"})
+        this.roughCanvas.line(x2,y2,x2-10*Math.cos(angle - Math.PI/6), y2-10*Math.sin(angle-Math.PI/6),{strokeWidth : 2, strokeLineDash : [1,6,6], stroke : "orange"});
+        this.roughCanvas.line(x2,y2,x2-10*Math.cos(angle + Math.PI/6), y2-10*Math.sin(angle+Math.PI/6),{strokeWidth : 2, strokeLineDash : [1,6,6], stroke : "orange"});
+    }
 
     clearAndRedraw() {
         const ctx = this.canvas.getContext("2d");
@@ -247,8 +254,28 @@ export class DrawShape {
             }
         })
         this.existingEdges.map((edge) => {
-            this.roughCanvas.line(edge.x1,edge.y1,edge.x2,edge.y2,{strokeWidth : 2, strokeLineDash : [1,6,6], stroke : "grey"})
+            this.drawArrow(edge);
         })
+        this.connections.map((connection) => {
+            if (this.existingShapes[connection.s].type==="rect" && this.existingShapes[connection.e].type==="rect") {
+                this.drawArrow({x1 : this.findCenter(this.existingShapes[connection.s])?.c1, y1 : this.findCenter(this.existingShapes[connection.s])?.c2, x2 : this.findCenter(this.existingShapes[connection.e])?.c1, y2 :  this.findCenter(this.existingShapes[connection.e])?.c2});
+            }
+            if (this.existingShapes[connection.s].type==="rect" && this.existingShapes[connection.e].type==="circle") {
+                this.drawArrow({x1 : this.findCenter(this.existingShapes[connection.s])?.c1, y1 : this.findCenter(this.existingShapes[connection.s])?.c2, x2 :this.existingShapes[connection.e].centerX , y2 :  this.existingShapes[connection.e].centerY});
+            }
+            if (this.existingShapes[connection.s].type==="circle" && this.existingShapes[connection.e].type==="rect") {
+                this.drawArrow({x1 : this.existingShapes[connection.s].centerX, y1 : this.existingShapes[connection.s].centerY, x2 : this.findCenter(this.existingShapes[connection.e])?.c1, y2 :  this.findCenter(this.existingShapes[connection.e])?.c2});
+            }
+            if (this.existingShapes[connection.s].type==="circle" && this.existingShapes[connection.e].type==="circle") {
+                this.drawArrow({x1 : this.existingShapes[connection.s].centerX, y1 : this.existingShapes[connection.s].centerY, x2 : this.existingShapes[connection.e].centerX, y2 :  this.existingShapes[connection.e].centerY});
+            }
+        })
+    }
+
+    findCenter (shape : Shape) {
+        if (shape.type!=="rect") return;
+        let c1 = shape.x + shape.width/2, c2 = shape.y + shape.height/2
+        return {c1,c2}
     }
 
     mouseDownHandler = (e: MouseEvent) => {
@@ -265,7 +292,6 @@ export class DrawShape {
                     this.shapeSelectedIndex = i
                 }
             })
-
             this.clearAndRedraw();
         }
         else if (this.selectedTool === "grab") {
@@ -332,6 +358,11 @@ export class DrawShape {
                 this.points.push([currentX, currentY]);
                 this.roughCanvas.polygon(this.points, { fill: this.backgroundColor, stroke: this.strokeColor, strokeWidth: this.strokeWidth });
             }
+            else if(this.selectedTool==="edge") {
+                const rect = this.canvas.getBoundingClientRect();
+
+                this.drawArrow({x1 :this.startX, y1 :  this.startY, x2 :  e.clientX-rect.left, y2 : e.clientY-rect.top});
+            }
             else if (this.selectedTool === "eraser") {
                 const rect = this.canvas.getBoundingClientRect();
                 const currentX = e.clientX - rect.left;
@@ -351,7 +382,7 @@ export class DrawShape {
                 let x1 = (2 * currentX - this.draggedShape.width) / 2, y1 = (2 * currentY - this.draggedShape.height) / 2;
                 this.draggedShape.x = x1
                 this.draggedShape.y = y1
-                console.log(this.shapeIndexEdge);
+
             }
             if (this.draggedShape.type === "circle") {
                 this.draggedShape.centerX = currentX
@@ -391,11 +422,7 @@ export class DrawShape {
                 this.clearAndRedraw();
             }
         }
-        else if (this.clicked && this.selectedTool === "edge") {
-            const rect = this.canvas.getBoundingClientRect();
-            this.roughCanvas.line(this.startX,this.startY,e.clientX-rect.left,e.clientY - rect.top, {strokeWidth : 2, strokeLineDash : [2,2,2], stroke : "grey"})
-            //this.clearAndRedraw();
-        }
+
     }
 
     mouseUpHandler = (e: MouseEvent) => {
@@ -428,7 +455,7 @@ export class DrawShape {
                 this.existingShapes.push({ type: "polygon", points: this.points, fill: this.backgroundColor, stroke: this.strokeColor, sw: this.strokeWidth });
             }
             else if (this.selectedTool === "eraser") {
-                this.existingShapes = this.existingShapes.filter((shape) => {
+                this.existingShapes = this.existingShapes.filter((shape,i) => {
                     if (!shape) return false;
                     return !this.path.some((point) => {
                         if (shape.type === "rect") {
@@ -476,7 +503,15 @@ export class DrawShape {
                         this.clearAndRedraw();
                     }
                 }
-
+                let shapeIndex : number
+                this.existingShapes.map((shape,i) => {
+                    if (!shape) return false;
+                    if (this.isPointInRect({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInCircle({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInLine({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPen({ x: e.clientX-rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
+                        shapeIndex = i
+                    }
+                })
+                this.connections.push({s : this.shapeSelectedIndex, e : shapeIndex})
+                this.clearAndRedraw()
             }
             else if (this.selectedTool === "grab") {
                 this.updateShapes();
