@@ -1,4 +1,16 @@
-import { Circle, Eraser, Grab, Minus, MousePointer2, Octagon, Pen, Square, TypeOutline,PaintBucket } from "lucide-react";
+import {
+    Circle,
+    Eraser,
+    Grab,
+    Minus,
+    MousePointer2,
+    Octagon,
+    Pen,
+    Square,
+    TypeOutline,
+    PaintBucket,
+    MoveUpRight
+} from "lucide-react";
 
 
 export const options = [
@@ -17,6 +29,10 @@ export const options = [
     {
         name: "line",
         icon: Minus
+    },
+    {
+      name : "edge",
+      icon : MoveUpRight
     },
     {
         name: "pen",
@@ -38,6 +54,5 @@ export const options = [
         name : "grab",
         icon : Grab
     },
-
 ]
 

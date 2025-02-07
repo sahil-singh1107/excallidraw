@@ -24,7 +24,6 @@ export function AppSidebar({ setSelected, selected }: { setSelected: Dispatch<Se
                             {options.map((item) => (
                                 <SidebarMenuItem key={item.name}>
                                     <SidebarMenuButton asChild className="transition duration-150">
-
                                         <item.icon className={`w-8 h-8 ${selected === item.name && "bg-[#18191a]"} hover:bg-[#18191a] focus:bg-[#18191a]`} color="white" onClick={() => {
                                             setSelected(item.name)
                                         }} />

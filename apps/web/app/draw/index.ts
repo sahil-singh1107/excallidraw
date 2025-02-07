@@ -49,9 +49,10 @@ type Shape = {
 }
 
 type Edge = {
-    type : number
-    shape1 : Shape
-    shape2 : Shape
+    x1 : number,
+    y1 : number,
+    x2 : number,
+    y2 : number
 }
 
 export class DrawShape {
@@ -59,7 +60,9 @@ export class DrawShape {
     private roughCanvas
     private existingShapes: Shape[]
     private existingEdges : Edge[]
+    private shapeIndexEdge : Map<number,number>
     public shapeSelected: Shape
+    private shapeSelectedIndex : number
     private roomId: number
     private clicked: boolean
     private selectedTool: string
@@ -70,15 +73,22 @@ export class DrawShape {
     private startX: number
     private startY: number
     private key : string
+    private edgeIndex : number
+    private edgeShape : number
     private draggedShape: Shape | null
+    private draggedShapeIndex : number
     private path: { x: number, y: number }[]
     private points: [number, number][]
 
     socket: WebSocket
 
     constructor(canvas: HTMLCanvasElement, roomId: number, selectedTool: string, socket: WebSocket, key : string) {
+        this.shapeIndexEdge = new Map<number,number>
+        this.edgeIndex = -1
+        this.edgeShape = -1
         this.canvas = canvas
         this.shapeSelected = null
+        this.shapeSelectedIndex = -1
         this.key = key
         this.roughCanvas = rough.canvas(canvas)
         this.existingShapes = []
@@ -237,13 +247,7 @@ export class DrawShape {
             }
         })
         this.existingEdges.map((edge) => {
-            if (edge.type === 1) {
-                if (edge.shape1.type==="rect" && edge.shape2.type==="rect") {
-                    const x1 = edge.shape1.x + edge.shape1.width, y1 = edge.shape1.y + edge.shape1.height / 2
-                    const  x2 = edge.shape2.x + edge.shape2.width/2, y2 = edge.shape2.y
-                    this.roughCanvas.line(x1, y1, x2, y2, { stroke: "grey", strokeWidth: 1, strokeLineDash: [1, 6, 6,] })
-                }
-            }
+            this.roughCanvas.line(edge.x1,edge.y1,edge.x2,edge.y2,{strokeWidth : 2, strokeLineDash : [1,6,6], stroke : "grey"})
         })
     }
 
@@ -254,10 +258,11 @@ export class DrawShape {
             this.clicked = true
             this.startX = e.clientX - rect.left
             this.startY = e.clientY - rect.top
-            this.existingShapes.map((shape) => {
+            this.existingShapes.map((shape,i) => {
                 if (!shape) return false;
                 if (this.isPointInRect({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInCircle({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInLine({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPen({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPolygon({ x: e.clientX-rect.left, y: e.clientY-rect.top }, shape)) {
                     this.shapeSelected = shape;
+                    this.shapeSelectedIndex = i
                 }
             })
 
@@ -267,12 +272,19 @@ export class DrawShape {
             this.clicked = true
             this.startX = e.clientX - rect.left
             this.startY = e.clientY - rect.top
-            this.existingShapes.map((shape) => {
+            this.existingShapes.map((shape,i) => {
                 if (!shape) return false;
                 if (this.isPointInRect({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInCircle({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInLine({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPen({ x: e.clientX-rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
                     this.draggedShape = shape
+                    this.draggedShapeIndex = i
                 }
             })
+
+        }
+        else if (this.selectedTool === "edge") {
+            this.clicked = true
+            this.startX = e.clientX - rect.left
+            this.startY = e.clientY - rect.top
         }
         else {
             this.clicked = true
@@ -339,6 +351,7 @@ export class DrawShape {
                 let x1 = (2 * currentX - this.draggedShape.width) / 2, y1 = (2 * currentY - this.draggedShape.height) / 2;
                 this.draggedShape.x = x1
                 this.draggedShape.y = y1
+                console.log(this.shapeIndexEdge);
             }
             if (this.draggedShape.type === "circle") {
                 this.draggedShape.centerX = currentX
@@ -377,7 +390,11 @@ export class DrawShape {
 
                 this.clearAndRedraw();
             }
-
+        }
+        else if (this.clicked && this.selectedTool === "edge") {
+            const rect = this.canvas.getBoundingClientRect();
+            this.roughCanvas.line(this.startX,this.startY,e.clientX-rect.left,e.clientY - rect.top, {strokeWidth : 2, strokeLineDash : [2,2,2], stroke : "grey"})
+            //this.clearAndRedraw();
         }
     }
 
@@ -436,6 +453,10 @@ export class DrawShape {
                 this.path = []
                 return;
             }
+            else if (this.selectedTool === "edge") {
+                this.existingEdges.push({x1 : this.startX, y1 : this.startY, x2 : e.clientX - rect.left, y2 : e.clientY - rect.top});
+                this.clearAndRedraw()
+            }
             else if (this.selectedTool === "select" && this.shapeSelected) {
                 if (this.shapeSelected.type === "rect") {
                     const rect = this.canvas.getBoundingClientRect();
@@ -454,17 +475,6 @@ export class DrawShape {
                         this.shapeSelected.height = newHeight;
                         this.clearAndRedraw();
                     }
-                }
-                let shape2 : Shape
-                this.existingShapes.map((shape) => {
-                    if (!shape) return false;
-                    if (this.isPointInRect({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInCircle({ x: e.clientX - rect.left, y: e.clientY - rect.top }, shape) || this.isPointInLine({ x: e.clientX - rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPen({ x: e.clientX-rect.left, y: e.clientY-rect.top }, shape) || this.isPointInPolygon({ x: e.clientX, y: e.clientY }, shape)) {
-                        shape2 = shape
-                    }
-                })
-                if (shape2) {
-                    this.existingEdges.push({type : 1, shape1 : this.shapeSelected, shape2 : shape2});
-                    this.clearAndRedraw();
                 }
 
             }
